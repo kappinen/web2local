@@ -1,0 +1,9 @@
+depricated/*
+.idea*
+resources/*
+web2local/target/*
+project/target/*
+*.class
+*.cache
+*.jar
+
