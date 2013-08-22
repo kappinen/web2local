@@ -22,17 +22,17 @@
  * THE SOFTWARE.
  */
 
-package net
+package io
 
 
 import scala.reflect.io.{File, Directory}
 import types.{PredDataCmd, PredData}
 import helper.Common._
 import helper.Common
+import org.joda.time.DateTime
 
 
 object LocalStorage {
-
 
   private def getReqId(data: String): String = {
     import java.security.MessageDigest
@@ -121,7 +121,7 @@ object LocalStorage {
 
   def data_as[R](whatkeys: String, data: Seq[types.PredData]): Map[String, Seq[R]] = {
     whatkeys.split(",").map((whatkey) =>
-      Map(whatkey -> data.map((pred) => pred.data(whatkey).toString().toDouble.asInstanceOf[R])))
+      Map(whatkey -> data.map((pred) => pred.data(whatkey).toString().trim.replaceAll(",",".").toDouble.asInstanceOf[R])))
       .reduce((a, b) => b ++ a)
   }
 
@@ -145,15 +145,30 @@ object LocalStorage {
   }
 
 
+  def defParser(source: String, data: Array[Array[String]]): Seq[PredData] = {
+    val header = data.head;
+
+    data.drop(1).map((a) => {
+      val data = (header zip a).toMap;
+      PredData(source, str2date(data("Date")).getMillis, List(), data)
+    })
+  }
+
+
+  def csv(parser:(String, Array[Array[String]]) => Seq[PredData])
+         (fileName:String, delimiter: String = ",") : Seq[PredData] =
+    parser(fileName, File(fileName).slurp.split("\n").map((line) => line.replaceAll("\r","").split(";")))
+
+
+
   def mini_csv(fileName:String, listName: String) : Seq[String] = {
     val file = File(fileName).slurp.split("\n").map((line) => line.split(","))
     val lineIndx = (file(0).zipWithIndex.filter((line) => line._1.equals(listName)))(0)._2
 
     file.drop(1)
-        .filter((line) => line.size > lineIndx)
-        .map((line) => line(1))
-        .filter((line) => !line.equals(""))
-        .filter((line) => !line.equals("#"))
+      .filter((line) => line.size > lineIndx)
+      .map((line) => line(1))
+      .filter((line) => !line.equals(""))
+      .filter((line) => !line.equals("#"))
   }
-
 }

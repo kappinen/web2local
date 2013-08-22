@@ -26,13 +26,9 @@ package sources
 
 import org.jsoup.nodes.Document
 
-import types.PredData
 import org.joda.time.DateTime
 import scala.collection.mutable
-import net.LocalStorage
-import sources.NettiAutoData._
-import types.PredData
-import net.LocalStorage._
+import io.LocalStorage._
 import types.PredData
 
 
@@ -140,7 +136,7 @@ object NettiAutoData extends DataSourceJsoup {
 
   override def parse(fetchData:(String) => Document)(url:String): PredData = {
 
-    val result = LocalStorage.getPredData(NettiAutoData.name, url)
+    val result = getPredData(NettiAutoData.name, url)
     if (result != null) {
       return result
     }
@@ -173,7 +169,7 @@ object NettiAutoData extends DataSourceJsoup {
 
     }
 
-    LocalStorage.writePredData(NettiAutoData.name, PredData(url, DateTime.now().getMillis, List(), values))
+    writePredData(NettiAutoData.name, PredData(url, DateTime.now().getMillis, List(), values))
   }
 
   override def parseItems(fetchData:(String) => Document)(opts:Map[String,String]): Seq[PredData] = {

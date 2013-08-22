@@ -41,4 +41,8 @@ abstract class DataSource {
                    .mapValues( _.size)
                    .zipWithIndex
                    .map(data => (data._1._1, data._2))
+
+  def groupByCount(transform:(Option[Any]) => String)(predDataSeq:Seq[PredData], key:String) : Seq[(String, Int)] =
+    predDataSeq.map((predData) => predData.data.get(key)).groupBy((w) => transform(w)).mapValues( _.size).toSeq.sortBy(_._2).reverse
+
 }

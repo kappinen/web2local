@@ -39,8 +39,12 @@ object Common {
     (new Thread( new Runnable() { def run() { f } } )).start
   }
 
+  def str2cents(value:String) : Int = (value.trim.replaceAll(",", ".").toDouble * 100).toInt
+
   def str2date(date: String) : DateTime = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime(date)
   def date2str(date: DateTime) : String =  DateTimeFormat.forPattern("yyyy-MM-dd").print(date)
+
+  def epoc2str(date:Long) : String = date2str(new DateTime(date))
 
   def bf2console(data: String) = data.split("\n").map((line) => printf("%s\n", line))
 

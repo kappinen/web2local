@@ -6,13 +6,13 @@ import scala._
 object PredDataCmd {
 
 
-  def obj2str(data: PredData):String = {
+  def obj2str(data: PredData): String = {
     generate(data)
   }
 
 
-  def str2obj(objectdata: String):PredData = {
-    inClassLoader(classOf[PredData]) ({
+  def str2obj(objectdata: String): PredData = {
+    inClassLoader(classOf[PredData])({
       parse[PredData](objectdata)
     })
   }

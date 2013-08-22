@@ -28,19 +28,26 @@ import breeze.plot._
 
 
 object Plots {
-  private val figure = Figure()
+  private var figure = Figure()
   private var plotN = figure.subplot(0)
 
-
-  def plot(x:Seq[Double], y:Seq[Double]) = {
-    figure.clear()
+  /* Simply creates a new plot*/
+  def plot(x:Seq[Double], y:Seq[Double], style: Char = '.') : Plot = {
+    figure = Figure()
     plotN = figure.subplot(0)
-    plotN += breeze.plot.plot(x, y, '.')
+    plotN += breeze.plot.plot(x, y, style)
   }
 
 
-  def plota(x:Seq[Double], y:Seq[Double]) = {
-    plotN += breeze.plot.plot(x, y, '.')
+  def plota(x:Seq[Double], y:Seq[Double], style: Char = '.') = {
+    plotN += breeze.plot.plot(x, y, style)
+  }
+
+
+  def plotc(x:Seq[Double], y:Seq[Double], style: Char = '.') = {
+    figure.clear()
+    plotN = figure.subplot(0)
+    plotN += breeze.plot.plot(x, y, style)
   }
 
 
@@ -48,5 +55,9 @@ object Plots {
     figure.clear()
     val p = figure.subplot(0)
     p += breeze.plot.hist(x)
+  }
+
+  def plotx(data:Seq[Double]*) = {
+    data.map((chart) => plota((1 to chart.size).map((a) => a.asInstanceOf[Double]), chart, '-'))
   }
 }
