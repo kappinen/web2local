@@ -27,7 +27,7 @@ package sources
 import types.PredData
 import org.openqa.selenium.htmlunit.HtmlUnitDriver
 import org.openqa.selenium.{WebDriver, By}
-import net.LocalStorage
+import io.LocalStorage
 import org.openqa.selenium.support.ui.Select
 import java.util.logging.Level
 
@@ -59,11 +59,12 @@ trait DataSourceWebDriver extends DataSource {
   def select(driver: WebDriver, xpath:String, value:String) : Unit = new Select(driver.findElement(By.xpath(xpath))).selectByValue(value)
   def sumbit(driver: WebDriver, xpath:String) : Unit = driver.findElement(By.xpath(xpath)).submit()
   def getDriver() : WebDriver = new HtmlUnitDriver()
-
-  def printData(data:Seq[PredData]) = data.sortWith((a,b) => (a.data("Price").toString.toDouble < b.data("Price").toString.toDouble))
-                                          .map((ap) => println(ap.source + " and price:" + ap.data("Price")))
+  def price2Double(price:String) : Double = price.trim.replaceAll(" ", "").replaceAll("€","").replaceAll(",",".").toDouble
+  def printData(data:Seq[PredData]) = data.sortWith((a,b) => (price2Double(a.data("Price").toString) < price2Double(b.data("Price").toString))).
+    map((ap) => println(ap.source + " and price:" + ap.data("Price")))
 
   def manageUrl(func:(WebDriver) => PredData)
+               (preFunc:Seq[(WebDriver) => Unit])
                (moduleName:String, id: String, url: String,
                 assignMap:Map[String,String],
                 selectMap:Map[String,String],
@@ -77,6 +78,7 @@ trait DataSourceWebDriver extends DataSource {
     val driver: WebDriver = getDriver()
 
     driver.get(url)
+    preFunc.map((a) => a(driver))
 
     assignMap.map((variable) => assign(driver, variable._1, variable._2))
     selectMap.map((variable) => select(driver, variable._1, variable._2))
