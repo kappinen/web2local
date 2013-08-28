@@ -155,10 +155,14 @@ object LocalStorage {
   }
 
 
-  def csv(parser:(String, Array[Array[String]]) => Seq[PredData])
-         (fileName:String, delimiter: String = ",") : Seq[PredData] =
-    parser(fileName, File(fileName).slurp.split("\n").map((line) => line.replaceAll("\r","").split(";")))
+  def csvFromString(parser:(String, Array[Array[String]]) => Seq[PredData])
+                   (source:String, text:String, delimiter: String) : Seq[PredData] =
+    parser(source, text.split("\n").map((line) => line.replaceAll("\r","").split(delimiter)))
 
+
+  def csv(parser:(String, Array[Array[String]]) => Seq[PredData])
+         (fileName:String, delimiter: String = ";") : Seq[PredData] =
+    csvFromString(parser)(fileName, File(fileName).slurp, ";")
 
 
   def mini_csv(fileName:String, listName: String) : Seq[String] = {

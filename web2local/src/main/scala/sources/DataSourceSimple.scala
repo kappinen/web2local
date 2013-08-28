@@ -24,28 +24,19 @@
 
 package sources
 
+import scala.io.Source._
 import types.PredData
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
+import java.net.URL
 
-abstract class DataSourceJsoup extends DataSource {
+abstract class DataSourceSimple extends DataSource {
 
-  protected def parse(fetchData:(String) => Document)(url:String): PredData
-  protected def parseItems(fetchData:(String) => Document)(opts:Map[String,String]): Seq[PredData]
+  protected def parse(fetchData:(String) => String)(url:String): PredData
+  protected def parseItems(fetchData:(String) => String)(opts:Map[String,String]): Seq[PredData]
 
+  def ftext(url:String): String =  fromInputStream(new URL(url).openStream).getLines.mkString("\n")
 
-  def gitem(criteria:String): PredData = {
+  def gitem(criteria:String): PredData = parse((url) => ftext(url))(criteria)
 
-    parse((url) => Jsoup.connect(url).get())(criteria)
-  }
-
-  def gitems(criteria:Map[String,String]): Seq[PredData] = {
-    parseItems((url) => Jsoup.connect(url).get())(criteria)
-  }
-
-  /* For debugging */
-  def ftext(url:String): String = {
-    Jsoup.connect(url).ignoreContentType(true).get().data()
-  }
+  def gitems(criteria:Map[String,String]): Seq[PredData] = parseItems((url) => ftext(url))(criteria)
 
 }
