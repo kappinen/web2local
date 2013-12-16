@@ -33,7 +33,7 @@ abstract class DataSource {
 
   def gitems(criteria:Map[String,String]): Seq[PredData]
 
-  def priceConv(price: String): Double = price.replaceAll(" ", "").replaceAll("€", "").trim.replaceAll(",", ".").toDouble
+  def price2Double(price:String) : Double = price.trim.replaceAll(" ", "").replaceAll("€","").replaceAll(",",".").toDouble
 
   def uniq_id(transform:(Option[Any]) => String)(predDataSeq:Seq[PredData], key:String):Map[String, Int] =
         predDataSeq.map((predData) => predData.data.get(key))
