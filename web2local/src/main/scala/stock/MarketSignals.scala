@@ -4,12 +4,13 @@ import analytics.Regression._
 import io.LocalStorage._
 import types.DataItem
 import stock.MarketStrategy._
+import stock.MarketState
 /**
  * Created with IntelliJ IDEA.
  * User: Evgeni Kappinen
  * Date: 8/15/13
  * Time: 6:54 PM
- 
+
 The MIT License (MIT)
 
 Copyright (c) <2013> <Evgeni Kappinen>
@@ -36,27 +37,27 @@ THE SOFTWARE.
 class MarketSignals {
 
 
-  def sellStopLost(market: MarketState, data: Seq[DataItem], params:Map[String, String]): Boolean = {
-    if (market.data.size != 0 && market.data.last.tags.contains("Buy")) {
-      if (market.data.last.data(market.buySellPrice).toString.replaceAll(",", ".").toDouble  * 100 * params("StopLost").toDouble >
+  def sellStopLost(market: MarketState, data: Seq[DataItem], params: Map[String, String]): Boolean = {
+    if (market.orders.size != 0 && market.orders.last.tags.contains("Buy")) {
+      if (market.orders.last.data(market.buySellPrice).toString.replaceAll(",", ".").toDouble * 100 * params("StopLost").toDouble >
         data.last.data(market.buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100)
         return true
     }
-    false
+    return false
   }
 
 
-  def sellStopWin(market: MarketState, data: Seq[DataItem], params:Map[String, String]): Boolean = {
-    if (market.data.size != 0 &&market.data.last.tags.contains("Buy")) {
-      if (market.data.last.data(market.buySellPrice).toString.replaceAll(",", ".").toDouble  * 100 * params("StopWin").toDouble <
+  def sellStopWin(market: MarketState, data: Seq[DataItem], params: Map[String, String]): Boolean = {
+    if (market.orders.size != 0 && market.orders.last.tags.contains("Buy")) {
+      if (market.orders.last.data(market.buySellPrice).toString.replaceAll(",", ".").toDouble * 100 * params("StopWin").toDouble <
         data.last.data(market.buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100)
         return true
     }
-    false
+    return false
   }
 
- def sellstopSMAWin(market: MarketState, data: Seq[DataItem], params:Map[String, String]): Boolean = {
-    if (market.data.size != 0 &&market.data.last.tags.contains("Buy")) {
+  def sellstopSMAWin(market: MarketState, data: Seq[DataItem], params: Map[String, String]): Boolean = {
+    if (market.orders.size != 0 && market.orders.last.tags.contains("Buy")) {
 
       val marketData = data_as[Double](market.buySellPrice, data)(market.buySellPrice)
       val sfast = sma(marketData.takeRight(params("RsiMax").toInt), 4)
@@ -66,7 +67,7 @@ class MarketSignals {
       }
     }
 
-    false
+    return false
   }
 
 
@@ -83,7 +84,7 @@ class MarketSignals {
         return true
       }
     }
-    false
+    return false
   }
 
 
@@ -97,8 +98,9 @@ class MarketSignals {
                      "StopLost" -> "0.97",  //When, sell signal is generated
                      "RsiMax" -> "200")     //Max, of take from the past to test
 
-    val second = testStrategy(Seq(sellStopLost, sellstopSMAWin), Seq(buyRsi))(metso.reverse, 20, new MarketState, params)
+    val second = testStrategy(Seq(sellStopLost, sellstopSMAWin), Seq(buyRsi))(metso.reverse.take(80), 20, new MarketState, params)
     second.raport()
-    second.plotData(metso.reverse)
+     second.orders
+   second.plotData(metso.take(80).reverse)
   }
 }
