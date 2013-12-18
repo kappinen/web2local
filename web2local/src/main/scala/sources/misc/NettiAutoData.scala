@@ -22,14 +22,15 @@
  * THE SOFTWARE.
  */
 
-package sources
+package sources.misc
 
 import org.jsoup.nodes.Document
 
 import org.joda.time.DateTime
 import scala.collection.mutable
 import io.LocalStorage._
-import types.PredData
+import types.DataItem
+import sources.DataSourceJsoup
 
 
 /**
@@ -134,7 +135,7 @@ object NettiAutoData extends DataSourceJsoup {
   }
 
 
-  override def parse(fetchData:(String) => Document)(url:String): PredData = {
+  override def parse(fetchData:(String) => Document)(url:String): DataItem = {
 
     val result = getPredData(NettiAutoData.name, url)
     if (result != null) {
@@ -169,10 +170,10 @@ object NettiAutoData extends DataSourceJsoup {
 
     }
 
-    writePredData(NettiAutoData.name, PredData(url, DateTime.now().getMillis, List(), values))
+    writePredData(NettiAutoData.name, DataItem(url, DateTime.now().getMillis, List(), values))
   }
 
-  override def parseItems(fetchData:(String) => Document)(opts:Map[String,String]): Seq[PredData] = {
+  override def parseItems(fetchData:(String) => Document)(opts:Map[String,String]): Seq[DataItem] = {
     val fromVal = opts.apply("from").toInt
     val toVal = opts.apply("to").toInt
     val head = opts.apply("head")
@@ -187,11 +188,11 @@ object NettiAutoData extends DataSourceJsoup {
                       } catch {
                         case e:Exception => println("Failed to fetch:" + url); null
                       })
-        .filter((data) => data.isInstanceOf[PredData])
+        .filter((data) => data.isInstanceOf[DataItem])
   }
 
 
-  def con_data(rawdata:Seq[types.PredData], list:List[String]) : Seq[types.PredData] = list.size match {
+  def con_data(rawdata:Seq[types.DataItem], list:List[String]) : Seq[types.DataItem] = list.size match {
     case 0 => return rawdata
     case _ =>
       val groupName = list(0)
@@ -199,14 +200,14 @@ object NettiAutoData extends DataSourceJsoup {
 
       return con_data(
         rawdata.map((predData) => {
-          new PredData( predData.source, predData.dtime,
+          new DataItem( predData.source, predData.dtime,
             predData.tags :+ predData.data(groupName).toString,
             predData.data.updated(groupName,
               group.get(predData.data(groupName).toString.toLowerCase).get))
         }), list.filter((aa)=> !aa.equals(groupName)))
   }
 
-  def predata() : Seq[types.PredData] = {
+  def predata() : Seq[types.DataItem] = {
     con_data(all_avail(NettiAutoData.name), List("Sijainti","Model", "Manufacturer"))
   }
 

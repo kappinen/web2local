@@ -24,25 +24,25 @@
 
 package sources
 
-import types.PredData
+import types.DataItem
 
 abstract class DataSource {
   val name:String
 
-  def gitem(criteria:String): PredData
+  def gitem(criteria:String): DataItem
 
-  def gitems(criteria:Map[String,String]): Seq[PredData]
+  def gitems(criteria:Map[String,String]): Seq[DataItem]
 
   def price2Double(price:String) : Double = price.trim.replaceAll(" ", "").replaceAll("€","").replaceAll(",",".").toDouble
 
-  def uniq_id(transform:(Option[Any]) => String)(predDataSeq:Seq[PredData], key:String):Map[String, Int] =
+  def uniq_id(transform:(Option[Any]) => String)(predDataSeq:Seq[DataItem], key:String):Map[String, Int] =
         predDataSeq.map((predData) => predData.data.get(key))
                    .groupBy((w) => transform(w))
                    .mapValues( _.size)
                    .zipWithIndex
                    .map(data => (data._1._1, data._2))
 
-  def groupByCount(transform:(Option[Any]) => String)(predDataSeq:Seq[PredData], key:String) : Seq[(String, Int)] =
+  def groupByCount(transform:(Option[Any]) => String)(predDataSeq:Seq[DataItem], key:String) : Seq[(String, Int)] =
     predDataSeq.map((predData) => predData.data.get(key)).groupBy((w) => transform(w)).mapValues( _.size).toSeq.sortBy(_._2).reverse
 
 }

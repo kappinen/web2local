@@ -22,20 +22,21 @@
  * THE SOFTWARE.
  */
 
-package sources
+package sources.airlines
 
-import helper.Common._
-import types.PredData
+import common.Utils._
+import types.DataItem
 import org.joda.time.DateTime
+import sources.DataSourceWebDriver
 
 
 abstract class AirPortSource extends DataSourceWebDriver {
 
 
-  def iterate(parseUrl : (String, String, String, String) => PredData)
-             (fromCities: Seq[String], toCities: Seq[String], fromDate: String, toDate: String): Seq[PredData] = {
+  def iterate(parseUrl : (String, String, String, String) => DataItem)
+             (fromCities: Seq[String], toCities: Seq[String], fromDate: String, toDate: String): Seq[DataItem] = {
 
-    var prices: Seq[PredData] = Seq[PredData]()
+    var prices: Seq[DataItem] = Seq[DataItem]()
     val total = fromCities.size * toCities.size * weekendsWithInPeriod(fromDate, toDate).size
     var count = 0;
 
@@ -56,10 +57,10 @@ abstract class AirPortSource extends DataSourceWebDriver {
   }
 
 
-  def iterateDays(parseUrl : (String, String, String, String) => PredData)
-             (fromCities: Seq[String], toCities: Seq[String], days: IndexedSeq [(DateTime, DateTime)]): Seq[PredData] = {
+  def iterateDays(parseUrl : (String, String, String, String) => DataItem)
+             (fromCities: Seq[String], toCities: Seq[String], days: IndexedSeq [(DateTime, DateTime)]): Seq[DataItem] = {
 
-    var prices: Seq[PredData] = Seq[PredData]()
+    var prices: Seq[DataItem] = Seq[DataItem]()
     val total = fromCities.size * toCities.size * days.size
     var count = 0;
 
@@ -165,7 +166,7 @@ abstract class AirPortSource extends DataSourceWebDriver {
     "Lanzarote"    -> None
   )
 
-  def gitem(criteria: String): PredData = ???
+  def gitem(criteria: String): DataItem = ???
 
-  def gitems(criteria: Map[String, String]): Seq[PredData] = ???
+  def gitems(criteria: Map[String, String]): Seq[DataItem] = ???
 }

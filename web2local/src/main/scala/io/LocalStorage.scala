@@ -26,10 +26,9 @@ package io
 
 
 import scala.reflect.io.{File, Directory}
-import types.{PredDataCmd, PredData}
-import helper.Common._
-import helper.Common
-import org.joda.time.DateTime
+import types.{DataItemUtil, DataItem}
+import common.Utils._
+import common.Utils
 
 
 object LocalStorage {
@@ -43,16 +42,16 @@ object LocalStorage {
   }
 
 
-  def writePredData(sourceName: String, predData: PredData): PredData = {
+  def writePredData(sourceName: String, predData: DataItem): DataItem = {
 
     thread {
-      val dirName = Common.pathResources + java.io.File.separator + sourceName;
+      val dirName = Utils.pathResources + java.io.File.separator + sourceName;
       Directory(dirName).createDirectory(true, false)
 
       val writer = File(dirName + java.io.File.separator + getReqId(predData.source) + ".json").writer(false)
 
       try {
-        writer.write(PredDataCmd.obj2str(predData))
+        writer.write(DataItemUtil.obj2str(predData))
       } finally {
         writer.close()
       }
@@ -62,23 +61,23 @@ object LocalStorage {
   }
 
 
-  def getType(x:Any) : Seq[PredData] = x match {
-    case b : PredData => Seq(b)
-    case _ => x.asInstanceOf[Seq[PredData]]
+  def getType(x:Any) : Seq[DataItem] = x match {
+    case b : DataItem => Seq(b)
+    case _ => x.asInstanceOf[Seq[DataItem]]
   }
 
 
-  def writePredData2(sourceName: String, predData: Any): Seq[PredData] = {
+  def writePredData2(sourceName: String, predData: Any): Seq[DataItem] = {
 
     val toProcess = getType(predData)
 
     thread {
-      val dirName = Common.pathResources + java.io.File.separator + sourceName
+      val dirName = Utils.pathResources + java.io.File.separator + sourceName
       Directory(dirName).createDirectory(true, false)
       val writer = File(dirName + java.io.File.separator + getReqId(sourceName) + ".json").writer(false)
 
       try {
-          toProcess.map((line) => writer.write(PredDataCmd.obj2str(line)))
+          toProcess.map((line) => writer.write(DataItemUtil.obj2str(line)))
       } finally {
         writer.close()
       }
@@ -99,7 +98,7 @@ object LocalStorage {
   def pathSelector(): String = {
     implicit def dirToString(x: Directory): String = x.stripExtension
 
-    val dir = Array(Directory(".")) ++ Directory(Common.pathResources).dirs.toArray[Directory]
+    val dir = Array(Directory(".")) ++ Directory(Utils.pathResources).dirs.toArray[Directory]
 
     dir.size match {
       case 1 => return ""
@@ -119,49 +118,49 @@ object LocalStorage {
   }
 
 
-  def data_as[R](whatkeys: String, data: Seq[types.PredData]): Map[String, Seq[R]] = {
+  def data_as[R](whatkeys: String, data: Seq[types.DataItem]): Map[String, Seq[R]] = {
     whatkeys.split(",").map((whatkey) =>
       Map(whatkey -> data.map((pred) => pred.data(whatkey).toString().trim.replaceAll(",",".").toDouble.asInstanceOf[R])))
       .reduce((a, b) => b ++ a)
   }
 
 
-  def all_avail(path: String = pathSelector()): Seq[PredData]
-      = Directory(Common.pathResources + java.io.File.separator + path)
+  def all_avail(path: String = pathSelector()): Seq[DataItem]
+      = Directory(Utils.pathResources + java.io.File.separator + path)
         .files.filter((file) => file.path.endsWith(".json"))
-        .toList.map((file) => PredDataCmd.str2obj(file.slurp()))
+        .toList.map((file) => DataItemUtil.str2obj(file.slurp()))
 
 
-  def getPredData(sourceName: String, id: String): PredData = {
+  def getPredData(sourceName: String, id: String): DataItem = {
     try {
-      val file = File(Common.pathResources + java.io.File.separator
+      val file = File(Utils.pathResources + java.io.File.separator
                       + sourceName + java.io.File.separator
                       + getReqId(id) + ".json")
 
-      PredDataCmd.str2obj(file.slurp())
+      DataItemUtil.str2obj(file.slurp())
     } catch {
       case e: java.io.FileNotFoundException => null
     }
   }
 
 
-  def defParser(source: String, data: Array[Array[String]]): Seq[PredData] = {
+  def defParser(source: String, data: Array[Array[String]]): Seq[DataItem] = {
     val header = data.head;
 
     data.drop(1).map((a) => {
       val data = (header zip a).toMap;
-      PredData(source, str2date(data("Date")).getMillis, List(), data)
+      DataItem(source, str2date(data("Date")).getMillis, List(), data)
     })
   }
 
 
-  def csvFromString(parser:(String, Array[Array[String]]) => Seq[PredData])
-                   (source:String, text:String, delimiter: String) : Seq[PredData] =
+  def csvFromString(parser:(String, Array[Array[String]]) => Seq[DataItem])
+                   (source:String, text:String, delimiter: String) : Seq[DataItem] =
     parser(source, text.split("\n").map((line) => line.replaceAll("\r","").split(delimiter)))
 
 
-  def csv(parser:(String, Array[Array[String]]) => Seq[PredData])
-         (fileName:String, delimiter: String = ";") : Seq[PredData] =
+  def csv(parser:(String, Array[Array[String]]) => Seq[DataItem])
+         (fileName:String, delimiter: String = ";") : Seq[DataItem] =
     csvFromString(parser)(fileName, File(fileName).slurp, ";")
 
 

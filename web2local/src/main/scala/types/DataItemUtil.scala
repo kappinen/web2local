@@ -1,19 +1,18 @@
 package types
 
 import com.codahale.jerkson.Json._
-import scala._
-
-object PredDataCmd {
+import types.DataItem
 
 
-  def obj2str(data: PredData): String = {
-    generate(data)
+object DataItemUtil {
+
+  def obj2str[T](data: T): String = {
+    generate[T](data)
   }
 
-
-  def str2obj(objectdata: String): PredData = {
-    inClassLoader(classOf[PredData])({
-      parse[PredData](objectdata)
+  def str2obj(objectdata: String): DataItem = {
+    inClassLoader(classOf[DataItem])({
+      parse[DataItem](objectdata)
     })
   }
 

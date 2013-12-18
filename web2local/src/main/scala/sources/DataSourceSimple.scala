@@ -25,18 +25,18 @@
 package sources
 
 import scala.io.Source._
-import types.PredData
+import types.DataItem
 import java.net.URL
 
 abstract class DataSourceSimple extends DataSource {
 
-  protected def parse(fetchData:(String) => String)(url:String): PredData
-  protected def parseItems(fetchData:(String) => String)(opts:Map[String,String]): Seq[PredData]
+  protected def parse(fetchData:(String) => String)(url:String): DataItem
+  protected def parseItems(fetchData:(String) => String)(opts:Map[String,String]): Seq[DataItem]
 
   def ftext(url:String): String =  fromInputStream(new URL(url).openStream).getLines.mkString("\n")
 
-  def gitem(criteria:String): PredData = parse((url) => ftext(url))(criteria)
+  def gitem(criteria:String): DataItem = parse((url) => ftext(url))(criteria)
 
-  def gitems(criteria:Map[String,String]): Seq[PredData] = parseItems((url) => ftext(url))(criteria)
+  def gitems(criteria:Map[String,String]): Seq[DataItem] = parseItems((url) => ftext(url))(criteria)
 
 }

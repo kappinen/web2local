@@ -24,8 +24,7 @@
 
 package sources
 
-import types.PredData
-import org.openqa.selenium.htmlunit.HtmlUnitDriver
+import types.DataItem
 import org.openqa.selenium.{WebElement, WebDriver, By}
 import io.LocalStorage
 import org.openqa.selenium.support.ui.Select
@@ -103,15 +102,15 @@ abstract class DataSourceWebDriver extends DataSource {
 
 
 
-  def printData(data:Seq[PredData]) = data.sortWith((a,b) => (price2Double(a.data("Price").toString) < price2Double(b.data("Price").toString))).
+  def printData(data:Seq[DataItem]) = data.sortWith((a,b) => (price2Double(a.data("Price").toString) < price2Double(b.data("Price").toString))).
     map((ap) => println(ap.source + " and price:" + ap.data("Price")))
 
-  def manageUrl(func:(WebDriver) => PredData)
+  def manageUrl(func:(WebDriver) => DataItem)
                (preFunc:Seq[(WebDriver) => Unit])
                (moduleName:String, id: String, url: String,
                 assignMap:Map[String,String],
                 selectMap:Map[String,String],
-                submitMap:Seq[String]): PredData = {
+                submitMap:Seq[String]): DataItem = {
 
     val result = LocalStorage.getPredData(moduleName, id)
     if (result != null) {

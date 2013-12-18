@@ -22,12 +22,12 @@
  * THE SOFTWARE.
  */
 
-package helper
+package common
 
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 
-object Common {
+object Utils {
   val pathResources:String = "resources"
   val pathRDirectory:String = "r-files"
   // Source: http://stackoverflow.com/questions/3073677/implicit-conversion-to-runnable

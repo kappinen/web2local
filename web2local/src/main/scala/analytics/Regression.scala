@@ -14,10 +14,9 @@ http://en.wikipedia.org/wiki/Categorical_variable
  y[1] ~ [x1,x2] => relation: y~x1+x2
  y[1] ~ x[x1,x2,x3] => y~x1+x2+x1*x2 => (relation:y~x1*x2)
  */
-import types.PredData
+import types.DataItem
 import org.apache.commons.math.stat.regression.OLSMultipleLinearRegression
 import org.apache.commons.math.stat.correlation.SpearmansCorrelation
-import helper.Timer._
 
 
 object Regression {
@@ -37,7 +36,7 @@ object Regression {
 
   def corr(x: Array[Double], y: Array[Double]): Double = correlation.correlation(x,y)
 
-  def getModel(data:Seq[PredData], opts:Map[String, String]) : Map[String, Any] = ???
+  def getModel(data:Seq[DataItem], opts:Map[String, String]) : Map[String, Any] = ???
 
 
   def res2add(param:Array[Double], data:Array[Array[Double]]) : Array[Array[Double]]

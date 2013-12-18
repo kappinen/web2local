@@ -24,22 +24,22 @@
 
 package sources
 
-import types.PredData
+import types.DataItem
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
 abstract class DataSourceJsoup extends DataSource {
 
-  protected def parse(fetchData:(String) => Document)(url:String): PredData
-  protected def parseItems(fetchData:(String) => Document)(opts:Map[String,String]): Seq[PredData]
+  protected def parse(fetchData:(String) => Document)(url:String): DataItem
+  protected def parseItems(fetchData:(String) => Document)(opts:Map[String,String]): Seq[DataItem]
 
 
-  def gitem(criteria:String): PredData = {
+  def gitem(criteria:String): DataItem = {
 
     parse((url) => Jsoup.connect(url).get())(criteria)
   }
 
-  def gitems(criteria:Map[String,String]): Seq[PredData] = {
+  def gitems(criteria:Map[String,String]): Seq[DataItem] = {
     parseItems((url) => Jsoup.connect(url).get())(criteria)
   }
 
