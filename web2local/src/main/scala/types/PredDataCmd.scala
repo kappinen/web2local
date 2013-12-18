@@ -30,4 +30,35 @@ object PredDataCmd {
     }
   }
 
+  /**
+   * Creates a subset of SetB intersection of SetA.
+   * @param comparitor
+   * @param setA
+   * @param setB
+   * @tparam T
+   * @return a subset of SetB intersection of SetA
+   */
+  def intersectBy[T](comparitor: (T, T) => Boolean)(setA: Seq[T], setB: Seq[T]): Seq[T] = {
+    setA.map((a) => setB.find((b) => comparitor(a, b))).filter((z) => z != None).map((a) => a.get.asInstanceOf[T])
+  }
+
+  /**
+   * Merges lists by comparitor
+   * @param comparitor comparitor
+   * @param args lists
+   * @tparam T type
+   * @return merged list
+   */
+  def mergeBy[T](comparitor: (T, T) => Boolean)(args: Seq[T]*): Seq[Seq[T]] = {
+
+    val minSize = args.reduce((a, b) => if (a.size < b.size) a else b)
+    val newArgs = args.map((ar) => intersectBy[T](comparitor)(minSize, ar))
+    val newMin = newArgs.reduce((a, b) => if (a.size < b.size) a else b)
+
+    if (minSize.size == newMin.size)
+      return newArgs
+    else
+      return mergeBy[T](comparitor)(newArgs: _*)
+  }
+
 }
