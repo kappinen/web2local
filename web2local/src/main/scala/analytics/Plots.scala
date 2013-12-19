@@ -28,36 +28,45 @@ import breeze.plot._
 
 
 object Plots {
-  private var figure = Figure()
+  private val figure = Figure()
   private var plotN = figure.subplot(0)
 
   /* Simply creates a new plot*/
-  def plot(x:Seq[Double], y:Seq[Double], style: Char = '.') : Plot = {
-    figure = Figure()
-    plotN = figure.subplot(0)
-    plotN += breeze.plot.plot(x, y, style)
-  }
-
-
-  def plota(x:Seq[Double], y:Seq[Double], style: Char = '.') = {
-    plotN += breeze.plot.plot(x, y, style)
-  }
-
-
-  def plotc(x:Seq[Double], y:Seq[Double], style: Char = '.') = {
+  def plot(x: Seq[Double], y: Seq[Double], style: Char = '.'): Plot = {
     figure.clear()
     plotN = figure.subplot(0)
     plotN += breeze.plot.plot(x, y, style)
+
+  }
+
+  def plotRefresh() = {
+    figure.clear()
+    plotN = figure.subplot(0)
+    figure.visible = true
+  }
+
+  def plota(x: Seq[Double], y: Seq[Double], style: Char = '.') = {
+    figure.visible = true
+    plotN += breeze.plot.plot(x, y, style)
   }
 
 
-  def hist(x:Seq[Double]) = {
+  def plotc(x: Seq[Double], y: Seq[Double], style: Char = '.') = {
+    figure.clear()
+    plotN = figure.subplot(0)
+
+    plotN += breeze.plot.plot(x, y, style)
+  }
+
+
+  def hist(x: Seq[Double]) = {
     figure.clear()
     val p = figure.subplot(0)
     p += breeze.plot.hist(x)
   }
 
-  def plotx(data:Seq[Double]*) = {
+  def plotx(data: Seq[Double]*) = {
+    figure.visible = true
     data.map((chart) => plota((1 to chart.size).map((a) => a.asInstanceOf[Double]), chart, '-'))
   }
 }

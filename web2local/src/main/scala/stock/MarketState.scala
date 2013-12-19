@@ -114,19 +114,19 @@ class MarketState {
 
   def plotData(marketData:Seq[DataItem]) {
 
-    val prices =  marketData.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",",".").toDouble)
-    val dates =  marketData.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
+    val prices = marketData.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",", " .").toDouble)
+    val dates = marketData.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
     plot(dates, prices, '-')
 
     val buys = orders.filter((a) => a.tags.contains("Buy"))
     val sells = orders.filter((a) => a.tags.contains("Sell"))
 
-    val vbuy =  buys.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",",".").toDouble)
-    val dbuy =  buys.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
-    plota(dbuy, vbuy, '*')
+    val vbuy = buys.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
+    val dbuy = buys.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
+    plota(dbuy, vbuy, '+')
 
-    val vsell =  sells.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",",".").toDouble)
-    val dsell =  sells.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
+    val vsell = sells.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
+    val dsell = sells.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
     plota(dsell, vsell, '+')
   }
 

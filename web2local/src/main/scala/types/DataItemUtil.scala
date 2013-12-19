@@ -1,7 +1,7 @@
 package types
 
 import com.codahale.jerkson.Json._
-import types.DataItem
+
 
 
 object DataItemUtil {
