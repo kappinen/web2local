@@ -31,33 +31,64 @@ object DataItemUtil {
 
   /**
    * Creates a subset of SetB intersection of SetA.
-   * @param comparitor
+   * @param comparator
    * @param setA
    * @param setB
    * @tparam T
    * @return a subset of SetB intersection of SetA
    */
-  def intersectBy[T](comparitor: (T, T) => Boolean)(setA: Seq[T], setB: Seq[T]): Seq[T] = {
-    setA.map((a) => setB.find((b) => comparitor(a, b))).filter((z) => z != None).map((a) => a.get.asInstanceOf[T])
+  def intersectBy[T](comparator: (T, T) => Boolean)(setA: Seq[T], setB: Seq[T]): Seq[T] = {
+    setA.map((a) => setB.find((b) => comparator(a, b))).filter((z) => z != None).map((a) => a.get.asInstanceOf[T])
   }
 
   /**
-   * Merges lists by comparitor
-   * @param comparitor comparitor
+   * Merges lists by comparator.
+   * @param comparator comparator
    * @param args lists
    * @tparam T type
    * @return merged list
    */
-  def mergeBy[T](comparitor: (T, T) => Boolean)(args: Seq[T]*): Seq[Seq[T]] = {
+  def mergeBy[T](comparator: (T, T) => Boolean)(args: Seq[T]*): Seq[Seq[T]] = {
 
     val minSize = args.reduce((a, b) => if (a.size < b.size) a else b)
-    val newArgs = args.map((ar) => intersectBy[T](comparitor)(minSize, ar))
+    val newArgs = args.map((ar) => intersectBy[T](comparator)(minSize, ar))
     val newMin = newArgs.reduce((a, b) => if (a.size < b.size) a else b)
 
     if (minSize.size == newMin.size)
       return newArgs
     else
-      return mergeBy[T](comparitor)(newArgs: _*)
+      return mergeBy[T](comparator)(newArgs: _*)
+  }
+
+  /**
+   *
+   * @param func changes an original value for a key within a data item.
+   * @param key data object with data item
+   * @param dataSeq a sequence of data items
+   * @return a new sequence of data items
+   */
+  def applyData(func: (Any) => Any)(key: String, dataSeq: Seq[DataItem]): Seq[DataItem] = {
+    dataSeq.map((data) => new DataItem(data.source, data.dtime, data.tags, data.data.updated(key, func(data.data(key)))))
+  }
+
+  /**
+   * Generalization for sliding window based indicators.
+   * @param func function takes Seq as an argument and should return the last element with the changed value of T
+   * @param dataSeq Initial data sequence
+   * @param minSize Minimum size of Sliding window
+   * @tparam T Data Item
+   * @return changed sequence of data items
+   */
+  def applyRecursively[T](func: (Seq[T]) => T)
+                         (dataSeq: Seq[T], minSize: Int): Seq[T] = {
+
+    val mResult: Seq[T] = {
+      if (dataSeq.size <= minSize) {
+        dataSeq
+      } else {
+        applyRecursively(func)(dataSeq.dropRight(1), minSize) }}
+
+    return mResult :+ func(mResult :+ dataSeq(dataSeq.size - 1))
   }
 
 }
