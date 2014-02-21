@@ -30,22 +30,23 @@ import org.jsoup.nodes.Document
 
 abstract class DataSourceJsoup extends DataSource {
 
-  protected def parse(fetchData:(String) => Document)(url:String): DataItem
-  protected def parseItems(fetchData:(String) => Document)(opts:Map[String,String]): Seq[DataItem]
+  protected def parse(fetchData: (String) => Document)(url: String): DataItem
+
+  protected def parseItems(fetchData: (String) => Document)(opts: Map[String, String]): Seq[DataItem]
 
 
-  def gitem(criteria:String): DataItem = {
+  def gitem(criteria: String): DataItem = {
 
     parse((url) => Jsoup.connect(url).get())(criteria)
   }
 
-  def gitems(criteria:Map[String,String]): Seq[DataItem] = {
+  def gitems(criteria: Map[String, String]): Seq[DataItem] = {
     parseItems((url) => Jsoup.connect(url).get())(criteria)
   }
 
   /* For debugging */
-  def ftext(url:String): String = {
-    Jsoup.connect(url).ignoreContentType(true).get().data()
+  def ftext(url: String): String = {
+    Jsoup.connect(url).ignoreContentType(true).timeout(100000).get().data()
   }
 
 }

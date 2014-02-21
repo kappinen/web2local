@@ -156,16 +156,16 @@ object LocalStorage {
 
   def csvFromString(parser:(String, Array[Array[String]]) => Seq[DataItem])
                    (source:String, text:String, delimiter: String) : Seq[DataItem] =
-    parser(source, text.split("\n").map((line) => line.replaceAll("\r","").split(delimiter)))
+    parser(source, text.split("\n").map((line) => line.replaceAll("\r","").replaceAll("\"","").split(delimiter)))
 
 
   def csv(parser:(String, Array[Array[String]]) => Seq[DataItem])
          (fileName:String, delimiter: String = ";") : Seq[DataItem] =
-    csvFromString(parser)(fileName, File(fileName).slurp, ";")
+    csvFromString(parser)(fileName, File(fileName).slurp, delimiter)
 
 
   def mini_csv(fileName:String, listName: String) : Seq[String] = {
-    val file = File(fileName).slurp.split("\n").map((line) => line.split(","))
+    val file = File(fileName).slurp.split("\n").map((line) => line.replaceAll("\"","").split(","))
     val lineIndx = (file(0).zipWithIndex.filter((line) => line._1.equals(listName)))(0)._2
 
     file.drop(1)

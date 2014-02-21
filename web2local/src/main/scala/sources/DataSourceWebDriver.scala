@@ -31,9 +31,10 @@ import org.openqa.selenium.support.ui.Select
 import java.util.logging.Level
 import java.util
 import scala.collection.JavaConverters._
-import org.openqa.selenium.chrome.ChromeDriver
+import org.openqa.selenium.chrome.{ChromeOptions, ChromeDriver}
 
 abstract class DataSourceWebDriver extends DataSource {
+  var driver: WebDriver = null;
 
   {
     System.setProperty("webdriver.chrome.driver", "/home/home/Dropbox/web/files/chromedriver")
@@ -46,6 +47,7 @@ abstract class DataSourceWebDriver extends DataSource {
     java.util.logging.Logger.getLogger("").setLevel(Level.OFF)
   }
 
+  def refresh() : Unit = driver = new ChromeDriver()
   /**
    *
    * Goal: Create map of items, then fetch item, then parse item into usable form (ItemData type)
@@ -55,8 +57,24 @@ abstract class DataSourceWebDriver extends DataSource {
    * TODO: Move to xpath
    */
 
+  def incognito(): WebDriver = {
+
+    val chromeOpts = new ChromeOptions();
+    chromeOpts.addArguments("--incognito");
+    driver = new ChromeDriver(chromeOpts);
+
+    return driver
+  }
+
   //new HtmlUnitDriver()
-  def getDriver() : WebDriver = new ChromeDriver()
+  def getDriver(): WebDriver = {
+    if (driver == null) {
+      driver = new ChromeDriver();
+      return driver
+    } else {
+      return driver
+    }
+  }
 
   def arise(func:(String) => By)(driver: WebDriver, xpath:String) : util.List[WebElement] = driver.findElements(func(xpath))
 

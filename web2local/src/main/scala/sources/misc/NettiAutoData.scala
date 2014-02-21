@@ -145,7 +145,6 @@ object NettiAutoData extends DataSourceJsoup {
     println("Fetching:" + url)
     val doc = fetchData(url)
 
-
     var values:Map[String, Any] = Map()
 
     values += parsePred("Price", doc.select("span[itemprop=price]").text())

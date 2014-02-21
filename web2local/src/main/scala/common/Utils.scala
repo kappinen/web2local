@@ -30,6 +30,10 @@ import org.joda.time.DateTime
 object Utils {
   val pathResources:String = "resources"
   val pathRDirectory:String = "r-files"
+
+  val CALENDAR_EUROPE_FORMAT = "yyyy-MM-dd"
+  val CALENDAR_US_FORMAT = "MM/dd/yyyy"
+
   // Source: http://stackoverflow.com/questions/3073677/implicit-conversion-to-runnable
   def thread[F](f: => F) = (new Thread( new Runnable() { def run() { f } } )).start
 
@@ -41,8 +45,11 @@ object Utils {
 
   def str2cents(value:String) : Int = (value.trim.replaceAll(",", ".").toDouble * 100).toInt
 
-  def str2date(date: String) : DateTime = DateTimeFormat.forPattern("yyyy-MM-dd").parseDateTime(date)
-  def date2str(date: DateTime) : String =  DateTimeFormat.forPattern("yyyy-MM-dd").print(date)
+  def str2date(date: String) : DateTime = string2date("yyyy-MM-dd", date)
+  def date2str(date: DateTime) : String =  date2string("yyyy-MM-dd", date)
+
+  def string2date(format: String, date: String) : DateTime = DateTimeFormat.forPattern(format).parseDateTime(date)
+  def date2string(format: String, date: DateTime) : String =  DateTimeFormat.forPattern(format).print(date)
 
   def epoc2str(date:Long) : String = date2str(new DateTime(date))
 
