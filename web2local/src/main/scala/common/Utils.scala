@@ -34,6 +34,8 @@ object Utils {
   val CALENDAR_EUROPE_FORMAT = "yyyy-MM-dd"
   val CALENDAR_US_FORMAT = "MM/dd/yyyy"
 
+  type Seq[+A] = scala.collection.Seq[A]
+
   // Source: http://stackoverflow.com/questions/3073677/implicit-conversion-to-runnable
   def thread[F](f: => F) = (new Thread( new Runnable() { def run() { f } } )).start
 

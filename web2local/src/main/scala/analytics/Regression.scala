@@ -68,9 +68,18 @@ object Regression {
     }._1.reverse
 
 
-  /* Diff takes valeus from the left */
+  /* Diff takes valeus from the left
+
+  * */
   def diff(data: Seq[Double]): Seq[Double] =  (data.drop(1) zip data.dropRight(1)).map((a) => a._2 - a._1)
 
+
+  /**
+   * * FIXME: fix :+ -> +:
+   * @param data
+   * @param x
+   * @return
+   */
   def ema(data: Array[Double], x: Int): Seq[Double] = {
 
     if (data.length <= 1) {

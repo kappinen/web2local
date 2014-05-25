@@ -174,4 +174,15 @@ object LocalStorage {
       .filter((line) => !line.equals(""))
       .filter((line) => !line.equals("#"))
   }
+
+
+  /**  http://www.oanda.com/currency/historical-rates/ */
+  def defParserOanda(source: String, data: Array[Array[String]]): scala.collection.mutable.Seq[DataItem] = {
+    val header = data.head;
+
+    data.drop(1).map((a) => {
+      val data = (header zip a).toMap;
+      DataItem(source, str2date(data("End Date").replaceAll("\"", "")).getMillis, List(), data)
+    })
+  }
 }

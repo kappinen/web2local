@@ -3,7 +3,6 @@ package types
 import com.codahale.jerkson.Json._
 
 
-
 object DataItemUtil {
 
   def obj2str[T](data: T): String = {
@@ -86,7 +85,9 @@ object DataItemUtil {
       if (dataSeq.size <= minSize) {
         dataSeq
       } else {
-        applyRecursively(func)(dataSeq.dropRight(1), minSize) }}
+        applyRecursively(func)(dataSeq.dropRight(1), minSize)
+      }
+    }
 
     return mResult :+ func(mResult :+ dataSeq(dataSeq.size - 1))
   }

@@ -48,13 +48,10 @@ abstract class DataSourceWebDriver extends DataSource {
   }
 
   def refresh() : Unit = driver = new ChromeDriver()
+
   /**
    *
    * Goal: Create map of items, then fetch item, then parse item into usable form (ItemData type)
-   *
-   * TODO: Cache
-   * TODO: store values to database = ??
-   * TODO: Move to xpath
    */
 
   def incognito(): WebDriver = {
@@ -64,6 +61,15 @@ abstract class DataSourceWebDriver extends DataSource {
     driver = new ChromeDriver(chromeOpts);
 
     return driver
+  }
+
+  def reOpen() = {
+    if (driver != null) {
+      try {
+        driver.close()
+      } catch { case ignore:Exception => ()}
+    }
+    driver = new ChromeDriver()
   }
 
   //new HtmlUnitDriver()
