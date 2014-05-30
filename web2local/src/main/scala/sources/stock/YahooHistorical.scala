@@ -20,10 +20,10 @@ object YahooHistorical extends DataSourceSimple {
 
 
   protected def parse(fetchData: (String) => String)(url: String): DataItem =
-    csvFromString(defParser)(url, fetchData(url), ",").head
+    csvFromString(srcParser)(url, fetchData(url), ",").head
 
   protected def parseItems(fetchData: (String) => String)(opts: Map[String, String]): Seq[DataItem] =
-    csvFromString(defParser)(opts("url"), fetchData(opts("url")), ",")
+    csvFromString(srcParser)(opts("url"), fetchData(opts("url")), ",")
 
 
   def buildUrl(indx: String, fromDate: String, toDate: String): String = {
@@ -45,26 +45,26 @@ object YahooHistorical extends DataSourceSimple {
 
   def run() = {
     urls.map((url) =>
-      csvFromString(defParser)(url._1, ftext(url._2), ","))
+      csvFromString(srcParser)(url._1, ftext(url._2), ","))
 
 //    import stock.YahooHistorical._
 
     val url2 = buildUrl("GOLD", "2013-01-01", date2str(new DateTime))
-    val gold = csvFromString(defParser)(url2, ftext(url2), ",")
+    val gold = csvFromString(srcParser)(url2, ftext(url2), ",")
 
 
     val url = buildUrl("^OMXH25", "2013-01-01", date2str(new DateTime))
-    val omx = csvFromString(defParser)(url, ftext(url), ",")
+    val omx = csvFromString(srcParser)(url, ftext(url), ",")
 
 
-    omx.filter((a) => a.data("Date").equals("2013-08-29"))
+    omx.filter((a) => a("Date").equals("2013-08-29"))
 
 
-    omx.find((a) => a.data("Date").equals("2013-08-29")).get
-    gold.find((a) => a.data("Date").equals("2013-08-29")).get
+    omx.find((a) => a("Date").equals("2013-08-29")).get
+    gold.find((a) => a("Date").equals("2013-08-29")).get
 
 
-    def mergeBy(a:DataItem) : Any = a.data("Date")
+    def mergeBy(a:DataItem) : Any = a("Date")
     val ii = omx.map((a) => mergeBy(a))
 
     val leading = omx

@@ -137,7 +137,7 @@ object NettiAutoData extends DataSourceJsoup {
 
   override def parse(fetchData:(String) => Document)(url:String): DataItem = {
 
-    val result = getPredData(NettiAutoData.name, url)
+    val result = selectDataItem(NettiAutoData.name, url)
     if (result != null) {
       return result
     }
@@ -169,7 +169,7 @@ object NettiAutoData extends DataSourceJsoup {
 
     }
 
-    writePredData(NettiAutoData.name, DataItem(url, DateTime.now().getMillis, List(), values))
+    storeDataItem(NettiAutoData.name, DataItem(url, DateTime.now().getMillis, List(), values))
   }
 
   override def parseItems(fetchData:(String) => Document)(opts:Map[String,String]): Seq[DataItem] = {
@@ -200,9 +200,9 @@ object NettiAutoData extends DataSourceJsoup {
       return con_data(
         rawdata.map((predData) => {
           new DataItem( predData.source, predData.dtime,
-            predData.tags :+ predData.data(groupName).toString,
+            predData(groupName).toString +: predData.tags,
             predData.data.updated(groupName,
-              group.get(predData.data(groupName).toString.toLowerCase).get))
+              group.get(predData(groupName).toString.toLowerCase).get))
         }), list.filter((aa)=> !aa.equals(groupName)))
   }
 

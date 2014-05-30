@@ -126,8 +126,8 @@ abstract class DataSourceWebDriver extends DataSource {
 
 
 
-  def printData(data:Seq[DataItem]) = data.sortWith((a,b) => (price2Double(a.data("Price").toString) < price2Double(b.data("Price").toString))).
-    map((ap) => println(ap.source + " and price:" + ap.data("Price")))
+  def printData(data:Seq[DataItem]) = data.sortWith((a,b) => (price2Double(a("Price").toString) < price2Double(b("Price").toString))).
+    map((ap) => println(ap.source + " and price:" + ap("Price")))
 
   def manageUrl(func:(WebDriver) => DataItem)
                (preFunc:Seq[(WebDriver) => Unit])
@@ -136,7 +136,7 @@ abstract class DataSourceWebDriver extends DataSource {
                 selectMap:Map[String,String],
                 submitMap:Seq[String]): DataItem = {
 
-    val result = LocalStorage.getPredData(moduleName, id)
+    val result = LocalStorage.selectDataItem(moduleName, id)
     if (result != null) {
       return result
     }
@@ -152,7 +152,7 @@ abstract class DataSourceWebDriver extends DataSource {
 
     val predData = func(driver)
 
-    LocalStorage.writePredData(moduleName, predData)
+    LocalStorage.storeDataItem(moduleName, predData)
   }
 
 }

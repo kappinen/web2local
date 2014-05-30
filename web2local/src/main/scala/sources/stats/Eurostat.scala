@@ -49,7 +49,7 @@ class Eurostat extends DataSourceScala {
     }
 
     if (opts.getOrElse[String]("list", "false").toBoolean) {
-      retSeq.foreach((a) => println(a.data("DatasetCode") + ":" + a.data("DatasetTitle")))
+      retSeq.foreach((a) => println(a("DatasetCode") + ":" + a("DatasetTitle")))
     }
 
     retSeq
@@ -71,7 +71,7 @@ class Eurostat extends DataSourceScala {
     val data = odata.gitems(Map("url" -> urlData2))
 
 
-    val usdEuro = csv(defParserOanda)("./resources/currency/usd-euro_monthly.csv", ",").
+    val usdEuro = csv(srcParserOanda)("./resources/currency/usd-euro_monthly.csv", ",").
       map((a) => a ++ Map("TIME" -> (a("End Date").substring(0,4) +"M" + a("End Date").substring(5,7).toInt)))
 
     val marketData=DataItemUtil.mergeBy((a:DataItem,b:DataItem) => a("TIME").

@@ -1,26 +1,38 @@
 package types
 
+import io.LocalStorage._
+import types.DataItem
+
 /**
- * Created by home on 5/24/14.
+ * Created by Evgeni Kappinen on 5/24/14.
  */
 object DataItemExtension {
 
   implicit class DataItemHelper(sequence: Seq[DataItem]) {
 
-    def getMinMax(key: String): Pair[Double, Double] =
+    def minnMaxBy(key: String): Pair[Double, Double] =
       sequence.foldLeft[Pair[Double, Double]](Pair(1, 0))((a, b) => (math.min(b(key).toDouble, a._1), math.max(b(key).toDouble, a._2)))
+
+    def meanBy(key: String): Double = sequence.toDouble(key).reduce((a, b) => b + a) / sequence.size
 
     def diffBy(key: String): Seq[DataItem] =
       (sequence.drop(1) zip sequence.dropRight(1)).
         map((a) => a._1 ++ Map(key -> (a._2(key).toDouble - a._1(key).toDouble)))
 
     def normilize(key: String): Seq[DataItem] = {
-      val limits = getMinMax(key)
+      val limits = minnMaxBy(key)
 
       sequence.map((a) => a ++ Map(key -> (a(key).toDouble - limits._1) / (limits._2 - limits._1)))
     }
 
-    def as[T](key: String): Seq[T] = sequence.map((a) => a(key).asInstanceOf[T])
+    def zscore(key: String): Seq[DataItem] = {
+      val limits = minnMaxBy(key)
+      val mean = meanBy(key)
+
+      sequence.map((a) => a ++ Map(key -> (a(key).toDouble - mean) / (limits._2 - limits._1)))
+    }
+
+    def toDouble(key: String): Seq[Double] = sequence.map((a) => a(key).toDouble)
 
   }
 }

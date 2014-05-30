@@ -67,7 +67,7 @@ object DataItemUtil {
    * @return a new sequence of data items
    */
   def applyData(func: (Any) => Any)(key: String, dataSeq: Seq[DataItem]): Seq[DataItem] = {
-    dataSeq.map((data) => new DataItem(data.source, data.dtime, data.tags, data.data.updated(key, func(data.data(key)))))
+    dataSeq.map((data) => new DataItem(data.source, data.dtime, data.tags, data.data.updated(key, func(data(key)))))
   }
 
   /**

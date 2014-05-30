@@ -42,48 +42,34 @@ object LocalStorage {
   }
 
 
-  def writePredData(sourceName: String, predData: DataItem): DataItem = {
+  def storeDataItem(sourceName: String, dataItem: DataItem): DataItem = {
 
     thread {
       val dirName = Utils.pathResources + java.io.File.separator + sourceName;
       Directory(dirName).createDirectory(true, false)
 
-      val writer = File(dirName + java.io.File.separator + getReqId(predData.source) + ".json").writer(false)
+      val writer = File(dirName + java.io.File.separator + getReqId(dataItem.source) + ".json").writer(false)
 
       try {
-        writer.write(DataItemUtil.obj2str(predData))
+        writer.write(DataItemUtil.obj2str(dataItem))
       } finally {
         writer.close()
       }
     }
 
-    predData
+    dataItem
   }
 
+  def selectDataItem(sourceName: String, id: String): DataItem = {
+    try {
+      val file = File(Utils.pathResources + java.io.File.separator
+        + sourceName + java.io.File.separator
+        + getReqId(id) + ".json")
 
-  def getType(x:Any) : Seq[DataItem] = x match {
-    case b : DataItem => Seq(b)
-    case _ => x.asInstanceOf[Seq[DataItem]]
-  }
-
-
-  def writePredData2(sourceName: String, predData: Any): Seq[DataItem] = {
-
-    val toProcess = getType(predData)
-
-    thread {
-      val dirName = Utils.pathResources + java.io.File.separator + sourceName
-      Directory(dirName).createDirectory(true, false)
-      val writer = File(dirName + java.io.File.separator + getReqId(sourceName) + ".json").writer(false)
-
-      try {
-          toProcess.map((line) => writer.write(DataItemUtil.obj2str(line)))
-      } finally {
-        writer.close()
-      }
+      DataItemUtil.str2obj(file.slurp())
+    } catch {
+      case e: java.io.FileNotFoundException => null
     }
-
-    toProcess
   }
 
 
@@ -118,9 +104,10 @@ object LocalStorage {
   }
 
 
+  @Deprecated
   def data_as[R](whatkeys: String, data: Seq[types.DataItem]): Map[String, Seq[R]] = {
     whatkeys.split(",").map((whatkey) =>
-      Map(whatkey -> data.map((pred) => pred.data(whatkey).toString().trim.replaceAll(",",".").toDouble.asInstanceOf[R])))
+      Map(whatkey -> data.map((pred) => pred(whatkey).trim.replaceAll(",",".").toDouble.asInstanceOf[R])))
       .reduce((a, b) => b ++ a)
   }
 
@@ -129,29 +116,6 @@ object LocalStorage {
       = Directory(Utils.pathResources + java.io.File.separator + path)
         .files.filter((file) => file.path.endsWith(".json"))
         .toList.map((file) => DataItemUtil.str2obj(file.slurp()))
-
-
-  def getPredData(sourceName: String, id: String): DataItem = {
-    try {
-      val file = File(Utils.pathResources + java.io.File.separator
-                      + sourceName + java.io.File.separator
-                      + getReqId(id) + ".json")
-
-      DataItemUtil.str2obj(file.slurp())
-    } catch {
-      case e: java.io.FileNotFoundException => null
-    }
-  }
-
-
-  def defParser(source: String, data: Array[Array[String]]): Seq[DataItem] = {
-    val header = data.head;
-
-    data.drop(1).map((a) => {
-      val data = (header zip a).toMap;
-      DataItem(source, str2date(data("Date")).getMillis, List(), data)
-    })
-  }
 
 
   def csvFromString(parser:(String, Array[Array[String]]) => Seq[DataItem])
@@ -176,13 +140,41 @@ object LocalStorage {
   }
 
 
+  def srcParser(source: String, data: Array[Array[String]]): Seq[DataItem] = {
+    val header = data.head
+
+    data.drop(1).map((a) => {
+      val data = (header zip a).toMap
+      DataItem(source, str2date(data("Date")).getMillis, List(), data)
+    })
+  }
+
+
   /**  http://www.oanda.com/currency/historical-rates/ */
-  def defParserOanda(source: String, data: Array[Array[String]]): scala.collection.mutable.Seq[DataItem] = {
-    val header = data.head;
+  def srcParserOanda(source: String, data: Array[Array[String]]): scala.collection.mutable.Seq[DataItem] = {
+    val header = data.head
 
     data.drop(1).map((a) => {
       val data = (header zip a).toMap;
       DataItem(source, str2date(data("End Date").replaceAll("\"", "")).getMillis, List(), data)
+    })
+  }
+
+  def srcParserNasdaqomxnordic(source: String, data: Array[Array[String]]): Seq[DataItem] = {
+    val header = data.head
+
+    def toDouble(key: String): Double = key.replaceAll(" ", "").replaceAll(",", ".").toDouble
+
+
+    data.drop(1).map((a) => {
+      val data = (header zip a).toMap
+      DataItem(source, str2date(data("Date")).getMillis, List(),
+        data ++ Map("Closing price" -> toDouble(data("Closing price")),
+          "Bid" -> toDouble(data("Bid")),
+          "Ask" -> toDouble(data("Ask")),
+          "Opening price" -> toDouble(data("Opening price")),
+          "High price" -> toDouble(data("High price")),
+          "Average price" -> toDouble(data("Average price"))))
     })
   }
 }

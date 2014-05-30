@@ -15,7 +15,12 @@ object Timer {
     val start = System.nanoTime
     val result = block
     val end = System.nanoTime
-    println(msg + ": ("+ block.getClass.getName +") " + (end - start) + "ns")
+    println(msg + ": (" + block.getClass.getName + ") " + (end - start) + "ns" + " " + (end - start) / 1000 + "ms")
     result
+  }
+
+  private def exampleOfTimer() = {
+    common.Timer.timer { println("Hi") }("spent")
+    common.Timer.time { println("Hi") }
   }
 }
