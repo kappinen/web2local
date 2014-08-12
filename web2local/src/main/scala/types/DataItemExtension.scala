@@ -10,7 +10,9 @@ object DataItemExtension {
 
   implicit class DataItemHelper(sequence: Seq[DataItem]) {
 
-    def minnMaxBy(key: String): Pair[Double, Double] =
+    def applyTo(newKey:String)(func: (DataItem) => Any): Seq[DataItem] = sequence.map((a) => a ++ Map(newKey -> func(a)))
+
+    def minMaxBy(key: String): Pair[Double, Double] =
       sequence.foldLeft[Pair[Double, Double]](Pair(1, 0))((a, b) => (math.min(b(key).toDouble, a._1), math.max(b(key).toDouble, a._2)))
 
     def meanBy(key: String): Double = sequence.toDouble(key).reduce((a, b) => b + a) / sequence.size
@@ -20,20 +22,19 @@ object DataItemExtension {
         map((a) => a._1 ++ Map(key -> (a._2(key).toDouble - a._1(key).toDouble)))
 
     def normilize(key: String): Seq[DataItem] = {
-      val limits = minnMaxBy(key)
+      val limits = minMaxBy(key)
 
       sequence.map((a) => a ++ Map(key -> (a(key).toDouble - limits._1) / (limits._2 - limits._1)))
     }
 
     def zscore(key: String): Seq[DataItem] = {
-      val limits = minnMaxBy(key)
+      val limits = minMaxBy(key)
       val mean = meanBy(key)
 
       sequence.map((a) => a ++ Map(key -> (a(key).toDouble - mean) / (limits._2 - limits._1)))
     }
 
     def toDouble(key: String): Seq[Double] = sequence.map((a) => a(key).toDouble)
-
   }
 }
 

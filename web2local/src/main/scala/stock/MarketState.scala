@@ -35,7 +35,7 @@ THE SOFTWARE.
  */
 
 class MarketState {
-  var budjet = 1500 * 100
+  var budjet = 2000 * 100
   var stocks = 0
   var orders: Seq[DataItem] = Seq()
 
@@ -52,11 +52,11 @@ class MarketState {
   def buy(price: DataItem) : MarketState = {
     if (stocks == 0 && budjet > 0) {
       budjet -= commission
-      val dprice = price.data(buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100
+      val dprice = price(buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100
       stocks = (budjet / dprice).toInt
       budjet -= (stocks * dprice.toInt)
       orders = orders :+ DataItem(price.source, price.dtime, price.tags ++ List("Buy"), price.data)
-//      println("Buying:" + epoc2str(price.dtime) + " for:" + price.data(buySellPrice))
+//      println("Buying:" + epoc2str(price.dtime) + " for:" + price(buySellPrice))
     }
     return this
   }
@@ -65,7 +65,7 @@ class MarketState {
   def sell(price: DataItem): MarketState = {
     if (stocks != 0) {
       budjet -= commission
-      val dprice = price.data(buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100
+      val dprice = price(buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100
       budjet += (stocks * dprice.toInt)
       stocks = 0
       if (budjet > statHighest)  statHighest = budjet
@@ -77,10 +77,10 @@ class MarketState {
   }
 
 
-  def getLastPrice() : Int = (orders.last.data(buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100).toInt
+  def getLastPrice() : Int = (orders.last(buySellPrice).toString.replaceAll(" ","").replaceAll(",", ".").toDouble * 100).toInt
 
 
-  def raport(): (Double, Int) = {
+  def report(): (Double, Int) = {
     val profit = ((getLastPrice() * stocks + budjet).toDouble - initBudjet) / 100
 
     val profitQueue = new scala.collection.mutable.Queue[Double]
@@ -90,7 +90,7 @@ class MarketState {
     val sells = orders.filter((a) => a.tags.contains("Sell"))
 
     (buys zip sells).map((a) =>  {
-      val pr = str2cents(a._2.data(buySellPrice).toString) - str2cents(a._1.data(buySellPrice).toString);
+      val pr = str2cents(a._2(buySellPrice).toString) - str2cents(a._1(buySellPrice).toString);
       if (pr > 0.00d)
         profitQueue.enqueue(pr)
       else
@@ -98,35 +98,35 @@ class MarketState {
     })
 
     println(">==" + profit + "=========================================================================")
-    println("Highest:" + statHighest / 100 + " Lowest:" + statLowest / 100)
+    println("Budjet Highest:" + statHighest / 100 + " Lowest:" + statLowest / 100 + " Inital:" + initBudjet / 100)
     println("Avg. Profit:" +  profitQueue.sum / profitQueue.size + " Avg. Lost:" + lostQueue.sum / lostQueue.size)
-    println("Orders:" + orders.size)
-    println("<----------------------------------------------------------------------------")
+    println("Orders Total:" + orders.size + " Profitable:" + profitQueue.size + " Lost:" + lostQueue.size)
+    println("<-----------------------------------------------------------------------------------------")
 
     (profit, orders.size)
   }
 
   def dumpBuysSells() = {
     orders.map((a) => {
-      println(a.tags.mkString(" :") + " date:" + a.data("Date").toString + " price:" + a.data("Closing price"))})
+      println(a.tags.mkString(" :") + " date:" + a("Date").toString + " price:" + a("Closing price"))})
   }
 
 
   def plotData(marketData:Seq[DataItem]) {
 
-    val prices = marketData.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",", " .").toDouble)
-    val dates = marketData.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
+    val prices = marketData.map((a) => a(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
+    val dates = marketData.map((a) => str2date(a("Date").toString).getMillis.toDouble)
     plot(dates, prices, '-')
 
     val buys = orders.filter((a) => a.tags.contains("Buy"))
     val sells = orders.filter((a) => a.tags.contains("Sell"))
 
-    val vbuy = buys.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
-    val dbuy = buys.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
+    val vbuy = buys.map((a) => a(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
+    val dbuy = buys.map((a) => str2date(a("Date").toString).getMillis.toDouble)
     plota(dbuy, vbuy, '+')
 
-    val vsell = sells.map((a) => a.data(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
-    val dsell = sells.map((a) => str2date(a.data("Date").toString).getMillis.toDouble)
+    val vsell = sells.map((a) => a(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
+    val dsell = sells.map((a) => str2date(a("Date").toString).getMillis.toDouble)
     plota(dsell, vsell, '+')
   }
 

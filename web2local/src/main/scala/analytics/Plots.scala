@@ -25,7 +25,8 @@
 package analytics
 
 import breeze.plot._
-
+import types.DataItem
+import types.DataItemExtension._
 
 object Plots {
   private val figure = Figure()
@@ -66,7 +67,10 @@ object Plots {
   }
 
   def plotx(data: Seq[Double]*) = {
-    figure.visible = true
     data.map((chart) => plota((1 to chart.size).map((a) => a.asInstanceOf[Double]), chart, '-'))
+  }
+
+  implicit class PlotsHelper(sequence: Seq[DataItem]) {
+    def plotBy(key: String): Seq[DataItem] = { plotx(sequence.toDouble(key)); sequence}
   }
 }

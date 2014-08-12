@@ -1,0 +1,1 @@
+trap 'if [ -d "$BASH_COMMAND" ]; then cd "$BASH_COMMAND"; fi' DEBUG
