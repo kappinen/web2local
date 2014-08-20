@@ -35,7 +35,7 @@ THE SOFTWARE.
  */
 
 class MarketState {
-  var budjet = 2000 * 100
+  var budjet = 3000 * 100
   var stocks = 0
   var orders: Seq[DataItem] = Seq()
 
@@ -46,17 +46,17 @@ class MarketState {
 
   val commission = 900
   val initBudjet = budjet
-  val buySellPrice = "Closing price"
 
+  def buySellPrice(item: DataItem):Double = ((item.toDouble("High price") + item.toDouble("Low price")) / 2.toDouble + item.toDouble("Closing price")) / 2.toDouble
 
   def buy(price: DataItem) : MarketState = {
     if (stocks == 0 && budjet > 0) {
       budjet -= commission
-      val dprice = price(buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100
+      val dprice = buySellPrice(price) * 100
       stocks = (budjet / dprice).toInt
       budjet -= (stocks * dprice.toInt)
       orders = orders :+ DataItem(price.source, price.dtime, price.tags ++ List("Buy"), price.data)
-//      println("Buying:" + epoc2str(price.dtime) + " for:" + price(buySellPrice))
+      println("Buying:" + epoc2str(price.dtime) + " for:" + buySellPrice(price))
     }
     return this
   }
@@ -65,23 +65,23 @@ class MarketState {
   def sell(price: DataItem): MarketState = {
     if (stocks != 0) {
       budjet -= commission
-      val dprice = price(buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100
+      val dprice = buySellPrice(price) * 100
       budjet += (stocks * dprice.toInt)
       stocks = 0
       if (budjet > statHighest)  statHighest = budjet
       if (budjet < statLowest)  statLowest = budjet
       orders = orders :+ DataItem(price.source, price.dtime, price.tags ++ List("Sell"), price.data)
-      println("*:" + epoc2str(price.dtime) + " gain/lost:" + (dprice - getLastPrice()) / 100)
+      println("   ** Selling:" + epoc2str(price.dtime) + " for:" + buySellPrice(price) + " gain/lost:" + (dprice - getLastPrice()) / 100.toDouble)
     }
     return this
   }
 
 
-  def getLastPrice() : Int = (orders.last(buySellPrice).toString.replaceAll(" ","").replaceAll(",", ".").toDouble * 100).toInt
+  def getLastPrice() : Int = (buySellPrice(orders.last) * 100).toInt
 
 
   def report(): (Double, Int) = {
-    val profit = ((getLastPrice() * stocks + budjet).toDouble - initBudjet) / 100
+    val profit = ((getLastPrice() * stocks + budjet).toDouble - initBudjet) / 100.toDouble
 
     val profitQueue = new scala.collection.mutable.Queue[Double]
     val lostQueue = new scala.collection.mutable.Queue[Double]
@@ -90,7 +90,7 @@ class MarketState {
     val sells = orders.filter((a) => a.tags.contains("Sell"))
 
     (buys zip sells).map((a) =>  {
-      val pr = str2cents(a._2(buySellPrice).toString) - str2cents(a._1(buySellPrice).toString);
+      val pr = (buySellPrice(a._2) * 100).toInt - (buySellPrice(a._1) * 100).toInt;
       if (pr > 0.00d)
         profitQueue.enqueue(pr)
       else
@@ -108,24 +108,25 @@ class MarketState {
 
   def dumpBuysSells() = {
     orders.map((a) => {
-      println(a.tags.mkString(" :") + " date:" + a("Date").toString + " price:" + a("Closing price"))})
+      println(a.tags.mkString(" :") + " date:" + a("Date").toString + " price:" + buySellPrice(a))
+    })
   }
 
 
   def plotData(marketData:Seq[DataItem]) {
 
-    val prices = marketData.map((a) => a(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
+    val prices = marketData.map((a) => buySellPrice(a))
     val dates = marketData.map((a) => str2date(a("Date").toString).getMillis.toDouble)
     plot(dates, prices, '-')
 
     val buys = orders.filter((a) => a.tags.contains("Buy"))
     val sells = orders.filter((a) => a.tags.contains("Sell"))
 
-    val vbuy = buys.map((a) => a(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
+    val vbuy = buys.map((a) => buySellPrice(a))
     val dbuy = buys.map((a) => str2date(a("Date").toString).getMillis.toDouble)
     plota(dbuy, vbuy, '+')
 
-    val vsell = sells.map((a) => a(buySellPrice).toString.trim.replaceAll(",", ".").toDouble)
+    val vsell = sells.map((a) => buySellPrice(a))
     val dsell = sells.map((a) => str2date(a("Date").toString).getMillis.toDouble)
     plota(dsell, vsell, '+')
   }

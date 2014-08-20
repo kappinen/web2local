@@ -160,21 +160,21 @@ object LocalStorage {
     })
   }
 
-  def srcParserNasdaqomxnordic(source: String, data: Array[Array[String]]): Seq[DataItem] = {
-    val header = data.head
+  def srcParserNasdaqomxnordic(source: String, tdata: Array[Array[String]]): Seq[DataItem] = {
+    val header = tdata.head
 
-    def toDouble(key: String): Double = key.replaceAll(" ", "").replaceAll(",", ".").toDouble
+    def toDouble(value: String): Double = value.replaceAll(" ", "").replaceAll(",", ".").toDouble
 
-
-    data.drop(1).map((a) => {
+    tdata.drop(1).filter((a) => {
+      val data = (header zip a).toMap
+      data("Closing price").nonEmpty && data("Low price").nonEmpty && data("High price").nonEmpty
+    }).map((a) => {
       val data = (header zip a).toMap
       DataItem(source, str2date(data("Date")).getMillis, List(),
         data ++ Map("Closing price" -> toDouble(data("Closing price")),
-          "Bid" -> toDouble(data("Bid")),
-          "Ask" -> toDouble(data("Ask")),
-          "Opening price" -> toDouble(data("Opening price")),
-          "High price" -> toDouble(data("High price")),
-          "Average price" -> toDouble(data("Average price"))))
+          "Low price" -> toDouble(data("Low price")),
+          "High price" -> toDouble(data("High price"))))
     })
   }
+
 }
