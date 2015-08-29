@@ -71,6 +71,7 @@ object Regression {
   @Deprecated
   def diff(data: Seq[Double]): Seq[Double] =  (data.drop(1) zip data.dropRight(1)).map((a) => a._2 - a._1)
 
+  def diffProcents(data: Seq[Double]): Seq[Double] =  (data.drop(1) zip data.dropRight(1)).map((a) => a._2 / a._1)
 
   /**
    * * FIXME: fix :+ -> +:

@@ -33,22 +33,26 @@ THE SOFTWARE.
  */
 object MarketStrategy {
 
-  def testStrategy(sellSignals:Seq[(MarketState, Seq[DataItem], Map[String, String]) => Boolean],
-                   buySignals:Seq[(MarketState, Seq[DataItem], Map[String, String]) => Boolean])
-                  (data: Seq[DataItem], minSize: Int, market: MarketState, params:Map[String, String]) : MarketState =
-  {
-    val mResult:MarketState = { if (data.size <= minSize) {
-      market;
-    } else {
-      testStrategy(sellSignals, buySignals)(data.dropRight(1), minSize, market, params)}}
+  def testStrategy(sellSignals: Seq[(MarketState, Seq[DataItem], Map[String, String]) => Boolean],
+                   buySignals: Seq[(MarketState, Seq[DataItem], Map[String, String]) => Boolean])
+                  (data: Seq[DataItem], minSize: Int, market: MarketState): MarketState = {
+    val mResult: MarketState = {
+      if (data.size <= minSize) {
+        market;
+      } else {
+        testStrategy(sellSignals, buySignals)(data.dropRight(1), minSize, market)
+      }
+    }
 
-    val sell = sellSignals.par.map((signal) => signal(mResult, data, params)).reduce((a,b) => a || b)
+    val sell = sellSignals.par.map((signal) => signal(mResult, data, market.params)).reduce((a, b) => a || b)
     if (sell) market.sell(data.last)
 
-    val buy = buySignals.par.map((signal) => signal(mResult, data, params)).reduce((a,b) => a || b)
-    if (buy) market.buy(data.last)
+    val buy = buySignals.par.map((signal) => signal(mResult, data, market.params)).reduce((a, b) => a && b)
+    if (!sell && buy) market.buy(data.last)
 
     return mResult
   }
 
+
+  def buySellPrice(item: DataItem): Double = ((item.toDouble("High price") + item.toDouble("Low price")) / 2.toDouble + item.toDouble("Closing price")) / 2.toDouble
 }

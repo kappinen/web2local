@@ -92,4 +92,23 @@ object DataItemUtil {
     return mResult :+ func(mResult :+ dataSeq(dataSeq.size - 1))
   }
 
+  /**
+   *  A slide counter
+   * @param dataSeq Initial data sequence
+   * @param minSize Minimum size of Sliding window
+   * @tparam T Data Item
+   * @return changed sequence of data items
+   */
+  def slideCounter[T](dataSeq: Seq[T], minSize: Int): Map[String, Int] = {
+    var map:Map[String, Int] = Map()
+
+    val iter = dataSeq.sliding(minSize)
+    while(iter.hasNext) {
+      val sig = iter.next.mkString
+      val counter = map.getOrElse(sig, 0)
+      map += sig -> (counter + 1)
+    }
+    map
+  }
+
 }

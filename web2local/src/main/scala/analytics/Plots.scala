@@ -25,6 +25,7 @@
 package analytics
 
 import breeze.plot._
+import common.Utils._
 import types.DataItem
 import types.DataItemExtension._
 
@@ -46,9 +47,9 @@ object Plots {
     figure.visible = true
   }
 
-  def plota(x: Seq[Double], y: Seq[Double], style: Char = '.') = {
+  def plota(x: Seq[Double], y: Seq[Double], style: Char = '.', colorcode : String = null, name : String = null) = {
     figure.visible = true
-    plotN += breeze.plot.plot(x, y, style)
+    plotN += breeze.plot.plot(x, y, style, colorcode, name)
   }
 
 
@@ -69,6 +70,9 @@ object Plots {
   def plotx(data: Seq[Double]*) = {
     data.map((chart) => plota((1 to chart.size).map((a) => a.asInstanceOf[Double]), chart, '-'))
   }
+
+  def plotWithDate(data: Seq[DataItem], dataKey: String) =
+    plota(data.map((a) => (str2date(a("Date").toString).getMillis.toDouble / (24*60*60*1000)).toInt.toDouble), data.toDouble(dataKey), '-')
 
   implicit class PlotsHelper(sequence: Seq[DataItem]) {
     def plotBy(key: String): Seq[DataItem] = { plotx(sequence.toDouble(key)); sequence}
