@@ -39,7 +39,7 @@ THE SOFTWARE.
 
  */
 
-class MarketState(parameters: Map[String, String], printDebug: Boolean = false) {
+class MarketState(val parameters: Map[String, String], val printDebug: Boolean = false) {
   var budjet = 3000 * 100
   var stocks = 0
 
@@ -56,8 +56,6 @@ class MarketState(parameters: Map[String, String], printDebug: Boolean = false) 
 
   val commisionMin = 900
   val initialBudjet = budjet
-  val params = parameters
-
 
   def commisionFunc(budjetValue: Int): Int = {
     if ((budjetValue * (0.20d / 100d)) > commisionMin) {

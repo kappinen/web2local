@@ -83,6 +83,6 @@ object Utils {
     if(isBlank(str)) {
       return false
     }
-    !throwsNumberFormatException(str.toLong) || !throwsNumberFormatException(str.toDouble)
+    !throwsNumberFormatException(str.replaceAll(" ", "").replaceAll(",", ".").toDouble)
   }
 }

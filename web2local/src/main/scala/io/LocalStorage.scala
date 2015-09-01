@@ -167,15 +167,17 @@ object LocalStorage {
 
     val filtered = tdata.drop(1).filter((a) => {
       val data = (header zip a).toMap
-      data("Closing price").nonEmpty && data("Low price").nonEmpty && data("High price").nonEmpty
+      isNumeric(data("Closing price")) && isNumeric(data("Low price")) && isNumeric(data("High price")) && isNumeric(data("Total volume"))
     })
 
-    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + filtered.size + " pros:" + (1 - filtered.size / tdata.size.toDouble))
+    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + (tdata.size - filtered.size) + " pros:" + (1 - filtered.size / tdata.size.toDouble)*100)
 
     filtered.map((a) => {
       val data = (header zip a).toMap
       DataItem(source, str2date(data("Date")).getMillis, List(),
-        data ++ Map("Closing price" -> toDouble(data("Closing price")),
+        data ++ Map(
+          "Closing price" -> toDouble(data("Closing price")),
+          "Volume" -> toDouble(data("Total volume")),
           "Low price" -> toDouble(data("Low price")),
           "High price" -> toDouble(data("High price"))))
     })
@@ -189,7 +191,6 @@ object LocalStorage {
 
     val filtered = tdata.drop(1).filter((a) => {
       val data = (header zip a).toMap
-      data("Closing price").nonEmpty && data("Low price").nonEmpty && data("High price").nonEmpty &&
         isNumeric(data("High price")) && isNumeric(data("Low price")) && isNumeric(data("Closing price"))
     })
 

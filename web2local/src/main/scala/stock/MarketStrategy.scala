@@ -44,10 +44,10 @@ object MarketStrategy {
       }
     }
 
-    val sell = sellSignals.par.map((signal) => signal(mResult, data, market.params)).reduce((a, b) => a || b)
+    val sell = sellSignals.par.map((signal) => signal(mResult, data, market.parameters)).reduce((a, b) => a || b)
     if (sell) market.sell(data.last)
 
-    val buy = buySignals.par.map((signal) => signal(mResult, data, market.params)).reduce((a, b) => a && b)
+    val buy = buySignals.par.map((signal) => signal(mResult, data, market.parameters)).reduce((a, b) => a && b)
     if (!sell && buy) market.buy(data.last)
 
     return mResult
