@@ -16,8 +16,6 @@ object DataItemExtension {
 
     def slidingBy(newKey:String, window:Int)(func: (Seq[DataItem]) => Any): Seq[DataItem] = sequence.sliding(window).toList.map((a) => a.last ++ Map(newKey -> func(a)))
 
-    def slidingMap(newKey:String, window:Int)(func: (Seq[DataItem]) => Any): Seq[DataItem] = sequence.sliding(window).toList.map((a) => a.last ++ Map(newKey -> func(a)))
-
     def minMaxBy(key: String): Pair[Double, Double] =
       sequence.foldLeft[Pair[Double, Double]](Pair(1, 0))((a, b) => (math.min(b(key).toDouble, a._1), math.max(b(key).toDouble, a._2)))
 

@@ -107,29 +107,29 @@ object LocalStorage {
   @Deprecated
   def data_as[R](whatkeys: String, data: Seq[types.DataItem]): Map[String, Seq[R]] = {
     whatkeys.split(",").map((whatkey) =>
-      Map(whatkey -> data.map((pred) => pred(whatkey).trim.replaceAll(",",".").toDouble.asInstanceOf[R])))
+      Map(whatkey -> data.map((pred) => pred(whatkey).trim.replaceAll(",", ".").toDouble.asInstanceOf[R])))
       .reduce((a, b) => b ++ a)
   }
 
 
   def all_avail(path: String = pathSelector()): Seq[DataItem]
-      = Directory(Utils.pathResources + java.io.File.separator + path)
-        .files.filter((file) => file.path.endsWith(".json"))
-        .toList.map((file) => DataItemUtil.str2obj(file.slurp()))
+  = Directory(Utils.pathResources + java.io.File.separator + path)
+    .files.filter((file) => file.path.endsWith(".json"))
+    .toList.map((file) => DataItemUtil.str2obj(file.slurp()))
 
 
-  def csvFromString(parser:(String, Array[Array[String]]) => Seq[DataItem])
-                   (source:String, text:String, delimiter: String) : Seq[DataItem] =
-    parser(source, text.split("\n").map((line) => line.replaceAll("\r","").replaceAll("\"","").split(delimiter)))
+  def csvFromString(parser: (String, Array[Array[String]]) => Seq[DataItem])
+                   (source: String, text: String, delimiter: String): Seq[DataItem] =
+    parser(source, text.split("\n").map((line) => line.replaceAll("\r", "").replaceAll("\"", "").split(delimiter)))
 
 
-  def csv(parser:(String, Array[Array[String]]) => Seq[DataItem])
-         (fileName:String, delimiter: String = ";") : Seq[DataItem] =
+  def csv(parser: (String, Array[Array[String]]) => Seq[DataItem])
+         (fileName: String, delimiter: String = ";"): Seq[DataItem] =
     csvFromString(parser)(fileName, File(fileName).slurp, delimiter)
 
 
-  def mini_csv(fileName:String, listName: String) : Seq[String] = {
-    val file = File(fileName).slurp.split("\n").map((line) => line.replaceAll("\"","").split(","))
+  def mini_csv(fileName: String, listName: String): Seq[String] = {
+    val file = File(fileName).slurp.split("\n").map((line) => line.replaceAll("\"", "").split(","))
     val lineIndx = (file(0).zipWithIndex.filter((line) => line._1.equals(listName)))(0)._2
 
     file.drop(1)
@@ -150,7 +150,7 @@ object LocalStorage {
   }
 
 
-  /**  http://www.oanda.com/currency/historical-rates/ */
+  /** http://www.oanda.com/currency/historical-rates/ */
   def srcParserOanda(source: String, data: Array[Array[String]]): scala.collection.mutable.Seq[DataItem] = {
     val header = data.head
 
@@ -165,13 +165,44 @@ object LocalStorage {
 
     def toDouble(value: String): Double = value.replaceAll(" ", "").replaceAll(",", ".").toDouble
 
-    tdata.drop(1).filter((a) => {
+    val filtered = tdata.drop(1).filter((a) => {
       val data = (header zip a).toMap
       data("Closing price").nonEmpty && data("Low price").nonEmpty && data("High price").nonEmpty
-    }).map((a) => {
+    })
+
+    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + filtered.size + " pros:" + (1 - filtered.size / tdata.size.toDouble))
+
+    filtered.map((a) => {
       val data = (header zip a).toMap
       DataItem(source, str2date(data("Date")).getMillis, List(),
         data ++ Map("Closing price" -> toDouble(data("Closing price")),
+          "Low price" -> toDouble(data("Low price")),
+          "High price" -> toDouble(data("High price"))))
+    })
+  }
+
+
+  def srcGoogleFinance(source: String, tdata: Array[Array[String]]): Seq[DataItem] = {
+    val header = tdata.head
+
+    def toDouble(value: String): Double = value.replaceAll(" ", "").replaceAll(",", ".").toDouble
+
+    val filtered = tdata.drop(1).filter((a) => {
+      val data = (header zip a).toMap
+      data("Closing price").nonEmpty && data("Low price").nonEmpty && data("High price").nonEmpty &&
+        isNumeric(data("High price")) && isNumeric(data("Low price")) && isNumeric(data("Closing price"))
+    })
+
+    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + filtered.size + " pros:" + (1 - filtered.size / tdata.size.toDouble))
+
+    filtered.map((a) => {
+      val data = (header zip a).toMap
+
+      DataItem(source,
+        str2dateMM(data("Date")).getMillis, List(),
+        data ++ Map(
+          "Date" -> date2str(str2dateMM(data("Date"))),
+          "Closing price" -> toDouble(data("Closing price")),
           "Low price" -> toDouble(data("Low price")),
           "High price" -> toDouble(data("High price"))))
     })

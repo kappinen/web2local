@@ -50,6 +50,8 @@ object Utils {
   def str2date(date: String) : DateTime = string2date("yyyy-MM-dd", date)
   def date2str(date: DateTime) : String =  date2string("yyyy-MM-dd", date)
 
+  def str2dateMM(date: String) : DateTime = string2date("dd-MMM-yy", date)
+
   def string2date(format: String, date: String) : DateTime = DateTimeFormat.forPattern(format).parseDateTime(date)
   def date2string(format: String, date: DateTime) : String =  DateTimeFormat.forPattern(format).print(date)
 
@@ -67,4 +69,20 @@ object Utils {
     (0 to weeks.toInt).map((week) => (firstFriday.plusWeeks(week), firstFriday.plusWeeks(week).plusDays(2)))
   }
 
+  def isBlank(value:String): Boolean = {
+    value == null || value.trim.isEmpty
+  }
+  def isNotBlank(value:String) : Boolean = !isBlank(value)
+
+  //http://rosettacode.org/wiki/Determine_if_a_string_is_numeric
+  private def throwsNumberFormatException(f: => Any): Boolean = {
+    try { f; false } catch { case e: NumberFormatException => true }
+  }
+
+  def isNumeric(str: String): Boolean = {
+    if(isBlank(str)) {
+      return false
+    }
+    !throwsNumberFormatException(str.toLong) || !throwsNumberFormatException(str.toDouble)
+  }
 }

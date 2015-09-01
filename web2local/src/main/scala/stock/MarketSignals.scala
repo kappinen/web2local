@@ -2,9 +2,19 @@ package stock
 
 import analytics.Regression._
 import io.LocalStorage._
-import types.DataItem
+import types.{DataItemUtil, DataItem}
 import stock.MarketStrategy._
+import common.Utils._
+import analytics.Plots._
+import types.DataItemExtension._
+import analytics.Plots._
+import types.DataItemUtil._
+import scala.math._
+import types.DataItem
 import stock.MarketState
+import stock.MarketStrategy._
+
+
 /**
  * Created with IntelliJ IDEA.
  * User: Evgeni Kappinen
@@ -34,13 +44,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
  */
-class MarketSignals {
+object MarketSignals {
 
 
   def sellStopLost(market: MarketState, data: Seq[DataItem], params: Map[String, String]): Boolean = {
     if (market.orders.size != 0 && market.orders.last.tags.contains("Buy")) {
-      if (market.orders.last.data(market.buySellPrice).toString.replaceAll(",", ".").toDouble * 100 * params("StopLost").toDouble >
-        data.last.data(market.buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100)
+      if (buySellPrice(market.orders.last) * 100 * params("StopLost").toDouble >
+        buySellPrice(data.last) * 100.toDouble)
         return true
     }
     return false
@@ -49,8 +59,8 @@ class MarketSignals {
 
   def sellStopWin(market: MarketState, data: Seq[DataItem], params: Map[String, String]): Boolean = {
     if (market.orders.size != 0 && market.orders.last.tags.contains("Buy")) {
-      if (market.orders.last.data(market.buySellPrice).toString.replaceAll(",", ".").toDouble * 100 * params("StopWin").toDouble <
-        data.last.data(market.buySellPrice).toString.trim.replaceAll(",", ".").toDouble * 100)
+      if (buySellPrice(market.orders.last) * 100 * params("StopWin").toDouble <
+        buySellPrice(data.last) * 100.toDouble)
         return true
     }
     return false
@@ -59,7 +69,7 @@ class MarketSignals {
   def sellstopSMAWin(market: MarketState, data: Seq[DataItem], params: Map[String, String]): Boolean = {
     if (market.orders.size != 0 && market.orders.last.tags.contains("Buy")) {
 
-      val marketData = data_as[Double](market.buySellPrice, data)(market.buySellPrice)
+      val marketData = data.applyTo("fixedPrice_")((a) => buySellPrice(a)).toDouble("fixedPrice_")
       val sfast = sma(marketData.takeRight(params("RsiMax").toInt), 4)
       val sslow = sma(marketData.takeRight(params("RsiMax").toInt), 20)
       if (sfast.last > sslow.last) {
@@ -73,14 +83,30 @@ class MarketSignals {
 
   def buyRsi(market: MarketState, data: Seq[DataItem], params:Map[String, String]): Boolean = {
 
-    val marketData = data_as[Double](market.buySellPrice, data)(market.buySellPrice)
+    val marketData = data.applyTo("fixedPrice_")((a) => buySellPrice(a)).toDouble("fixedPrice_")
 
-    val sfast = sma(marketData.takeRight(params("RsiMax").toInt), 4)
-    val sslow = sma(marketData.takeRight(params("RsiMax").toInt), 20)
+    val sfast = sma(marketData.takeRight(params("RsiMax").toInt), params("SMAFastN").toInt)
+    val sslow = sma(marketData.takeRight(params("RsiMax").toInt), params("SMASlowN").toInt)
 
     val rsiVal = rsi(ema)(marketData.takeRight(params("RsiMax").toInt).toArray, params("RsiPeriod").toInt)
-    if (rsiVal.last > params("RsiLimit").toDouble) {
-      if (sfast.last < sslow.last) {
+    if (rsiVal.last > params("RsiBuyLimit").toDouble &&
+          sfast.last < sslow.last) {
+        return true
+    }
+
+    return false
+  }
+
+  def sellRsi(market: MarketState, data: Seq[DataItem], params:Map[String, String]): Boolean = {
+
+    val marketData = data.applyTo("fixedPrice_")((a) => buySellPrice(a)).toDouble("fixedPrice_")
+
+    val sfast = sma(marketData.takeRight(params("RsiMax").toInt), params("SMAFastN").toInt)
+    val sslow = sma(marketData.takeRight(params("RsiMax").toInt), params("SMASlowN").toInt)
+
+    val rsiVal = rsi(ema)(marketData.takeRight(params("RsiMax").toInt).toArray, params("RsiPeriod").toInt)
+    if (rsiVal.last > params("RsiSellLimit").toDouble) {
+      if (sfast.last > sslow.last) {
         return true
       }
     }
@@ -88,19 +114,40 @@ class MarketSignals {
   }
 
 
-  def example_stock() = {
+  def randomWalk(market: MarketState, data: Seq[DataItem], params:Map[String, String]): Boolean = (math.random *10).toInt % 2 == 1
+  def randomWalk2(market: MarketState, data: Seq[DataItem], params:Map[String, String]): Boolean = (math.random *100).toInt % 20 == 1
 
-    val metso = csv(defParser)("resources/stock/MEO1V_FI0009007835-1990-01-01-2013-08-10.csv")
 
-    val params = Map("RsiPeriod" -> "15",   //rsi(data,RsiPeriod)
-                     "RsiLimit" -> "86.00", //when rsi singal is generated
-                     "StopWin" -> "1.05",   //when sell signal is generated
-                     "StopLost" -> "0.97",  //When, sell signal is generated
-                     "RsiMax" -> "200")     //Max, of take from the past to test
+  def vpt2(dataSeq: Seq[DataItem]): DataItem = {
+    val window = dataSeq.takeRight(2)
+    val today = window(1)
+    val previous = window(0)
+    val prevVPT:Int = if (previous.data.contains("Count")) {
+      previous("Count").toString.toInt
+    } else { 0 }
 
-    val second = testStrategy(Seq(sellStopLost, sellstopSMAWin), Seq(buyRsi))(metso.reverse.take(80), 20, new MarketState, params)
-    second.raport()
-     second.orders
-   second.plotData(metso.take(80).reverse)
+
+    new DataItem(today.source, today.dtime, today.tags, today.data.updated("Count", prevVPT + 1))
   }
+
+  def vpt(dataSeq: Seq[DataItem]): DataItem = {
+
+    val window = dataSeq.takeRight(2)
+    val today = window(1)
+    val previous = window(0)
+
+    val prevVPT = if (previous.data.contains("VPT")) {
+      previous("VPT").toString.toDouble
+    } else { 0.0d }
+
+
+    val closeDiff = (Option(today("Total volume")).getOrElse("1")).toDouble *
+    (str2cents(today("Closing price")) - str2cents(previous("Closing price"))) /
+      str2cents(previous("Closing price")).toDouble
+
+    val VPT = prevVPT + closeDiff
+
+    new DataItem(today.source, today.dtime, today.tags, today.data.updated("VPT", VPT))
+  }
+
 }
