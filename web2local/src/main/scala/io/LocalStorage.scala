@@ -75,9 +75,9 @@ object LocalStorage {
 
   /**
    * checks if pathResources contains any directories,
-   *  if not then select pathResources
-   *  if only one directory select it
-   *  if multiple print them out according indexes and return selected
+   * if not then select pathResources
+   * if only one directory select it
+   * if multiple print them out according indexes and return selected
    *
    * @return
    */
@@ -163,14 +163,12 @@ object LocalStorage {
   def srcParserNasdaqomxnordic(source: String, tdata: Array[Array[String]]): Seq[DataItem] = {
     val header = tdata.head
 
-    def toDouble(value: String): Double = value.replaceAll(" ", "").replaceAll(",", ".").toDouble
-
     val filtered = tdata.drop(1).filter((a) => {
       val data = (header zip a).toMap
       isNumeric(data("Closing price")) && isNumeric(data("Low price")) && isNumeric(data("High price")) && isNumeric(data("Total volume"))
     })
 
-    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + (tdata.size - filtered.size) + " pros:" + (1 - filtered.size / tdata.size.toDouble)*100)
+    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + (tdata.size - filtered.size) + " pros:" + (1 - filtered.size / tdata.size.toDouble) * 100)
 
     filtered.map((a) => {
       val data = (header zip a).toMap
@@ -183,29 +181,47 @@ object LocalStorage {
     })
   }
 
+  def srcParserNasdaqomxnordicVolumeLess(source: String, tdata: Array[Array[String]]): Seq[DataItem] = {
+    val header = tdata.head
+
+    val filtered = tdata.drop(1).filter((a) => {
+      val data = (header zip a).toMap
+      isNumeric(data("Closing price")) && isNumeric(data("Low price")) && isNumeric(data("High price"))
+    })
+
+    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + (tdata.size - filtered.size) + " pros:" + (1 - filtered.size / tdata.size.toDouble) * 100)
+
+    filtered.map((a) => {
+      val data = (header zip a).toMap
+      DataItem(source, str2date(data("Date")).getMillis, List(),
+        data ++ Map(
+          "Closing price" -> toDouble(data("Closing price")),
+          "Low price" -> toDouble(data("Low price")),
+          "High price" -> toDouble(data("High price"))))
+    })
+  }
+
 
   def srcGoogleFinance(source: String, tdata: Array[Array[String]]): Seq[DataItem] = {
     val header = tdata.head
 
-    def toDouble(value: String): Double = value.replaceAll(" ", "").replaceAll(",", ".").toDouble
-
     val filtered = tdata.drop(1).filter((a) => {
       val data = (header zip a).toMap
-        isNumeric(data("High price")) && isNumeric(data("Low price")) && isNumeric(data("Closing price"))
+      isNumeric(data("High")) && isNumeric(data("Low")) && isNumeric(data("Close"))
     })
 
-    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + filtered.size + " pros:" + (1 - filtered.size / tdata.size.toDouble))
+    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + (tdata.size - filtered.size) + " pros:" + (1 - filtered.size / tdata.size.toDouble) * 100)
 
     filtered.map((a) => {
       val data = (header zip a).toMap
 
       DataItem(source,
-        str2dateMM(data("Date")).getMillis, List(),
+        str2date(data("Date"), "dd-MMM-yy").getMillis, List(),
         data ++ Map(
-          "Date" -> date2str(str2dateMM(data("Date"))),
-          "Closing price" -> toDouble(data("Closing price")),
-          "Low price" -> toDouble(data("Low price")),
-          "High price" -> toDouble(data("High price"))))
+          "Date" -> date2str(str2date(data("Date"), "dd-MMM-yy")),
+          "Closing price" -> toDouble(data("Close")),
+          "Low price" -> toDouble(data("Low")),
+          "High price" -> toDouble(data("High"))))
     })
   }
 

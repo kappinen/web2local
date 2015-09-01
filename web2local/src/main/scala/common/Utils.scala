@@ -28,8 +28,8 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
 
 object Utils {
-  val pathResources:String = "resources"
-  val pathRDirectory:String = "r-files"
+  val pathResources: String = "resources"
+  val pathRDirectory: String = "r-files"
 
   val CALENDAR_EUROPE_FORMAT = "yyyy-MM-dd"
   val CALENDAR_US_FORMAT = "MM/dd/yyyy"
@@ -37,30 +37,37 @@ object Utils {
   type Seq[+A] = scala.collection.Seq[A]
 
   // Source: http://stackoverflow.com/questions/3073677/implicit-conversion-to-runnable
-  def thread[F](f: => F) = (new Thread( new Runnable() { def run() { f } } )).start
+  def thread[F](f: => F) = (new Thread(new Runnable() {
+    def run() {
+      f
+    }
+  })).start
 
 
   def threadWithTimer[F](timer: => Unit = Thread.sleep(1000))(f: => F) = {
     timer
-    (new Thread( new Runnable() { def run() { f } } )).start
+    (new Thread(new Runnable() {
+      def run() {
+        f
+      }
+    })).start
   }
 
-  def str2cents(value:String) : Int = (value.trim.replaceAll(",", ".").toDouble * 100).toInt
+  def str2cents(value: String): Int = (value.trim.replaceAll(",", ".").toDouble * 100).toInt
 
-  def str2date(date: String) : DateTime = string2date("yyyy-MM-dd", date)
-  def date2str(date: DateTime) : String =  date2string("yyyy-MM-dd", date)
+  def str2date(date: String, format: String = "yyyy-MM-dd"): DateTime = string2date(format, date)
 
-  def str2dateMM(date: String) : DateTime = string2date("dd-MMM-yy", date)
+  def date2str(date: DateTime, format: String = "yyyy-MM-dd"): String = date2string(format, date)
 
-  def string2date(format: String, date: String) : DateTime = DateTimeFormat.forPattern(format).parseDateTime(date)
-  def date2string(format: String, date: DateTime) : String =  DateTimeFormat.forPattern(format).print(date)
+  private def string2date(format: String, date: String): DateTime = DateTimeFormat.forPattern(format).parseDateTime(date)
 
-  def epoc2str(date:Long) : String = date2str(new DateTime(date))
+  private def date2string(format: String, date: DateTime): String = DateTimeFormat.forPattern(format).print(date)
+
+  def epoc2str(date: Long): String = date2str(new DateTime(date))
 
   def bf2console(data: String) = data.split("\n").map((line) => printf("%s\n", line))
 
-
-  def weekendsWithInPeriod(startD: String, endD: String): IndexedSeq [(DateTime, DateTime)] = {
+  def weekendsWithInPeriod(startD: String, endD: String): IndexedSeq[(DateTime, DateTime)] = {
     val skip = org.joda.time.DateTimeConstants.FRIDAY - str2date(startD).getDayOfWeek
     val firstFriday = str2date(startD).plusDays(skip)
 
@@ -69,20 +76,29 @@ object Utils {
     (0 to weeks.toInt).map((week) => (firstFriday.plusWeeks(week), firstFriday.plusWeeks(week).plusDays(2)))
   }
 
-  def isBlank(value:String): Boolean = {
+  def isBlank(value: String): Boolean = {
     value == null || value.trim.isEmpty
   }
-  def isNotBlank(value:String) : Boolean = !isBlank(value)
+
+  def isNotBlank(value: String): Boolean = !isBlank(value)
 
   //http://rosettacode.org/wiki/Determine_if_a_string_is_numeric
   private def throwsNumberFormatException(f: => Any): Boolean = {
-    try { f; false } catch { case e: NumberFormatException => true }
+    try {
+      f; false
+    } catch {
+      case e: NumberFormatException => true
+    }
   }
 
   def isNumeric(str: String): Boolean = {
-    if(isBlank(str)) {
+    if (isBlank(str)) {
       return false
     }
-    !throwsNumberFormatException(str.replaceAll(" ", "").replaceAll(",", ".").toDouble)
+    !throwsNumberFormatException(toDouble(str))
   }
+
+  def isNotNumeric(str: String): Boolean = !isNumeric(str)
+
+  def toDouble(str:String) = str.replaceAll(" ", "").replaceAll(",", ".").toDouble
 }

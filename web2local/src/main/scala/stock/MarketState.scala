@@ -102,7 +102,7 @@ class MarketState(val parameters: Map[String, String], val printDebug: Boolean =
 
 
       stocks = 0
-      orders = orders :+ DataItem(price.source, price.dtime, price.tags ++ List("Sell"), price.data)
+      orders = orders :+ DataItem(price.source, price.dtime, price.tags ++ List("Sell", "Portfolio.returns"), price.data ++ Map("Portfolio.returns" -> (budjet / initialBudjet.toDouble)))
     }
     return this
   }
@@ -164,6 +164,16 @@ class MarketState(val parameters: Map[String, String], val printDebug: Boolean =
 
     val vsell = sells.map((a) => buySellPrice(a))
     val dsell = sells.map((a) => (str2date(a("Date").toString).getMillis.toDouble / (24 * 60 * 60 * 1000)).toInt.toDouble)
+
+
+    val multiplier = sells.meanBy("Closing price") / 2d
+    val returns = orders.filter((a) => a.data.get("Portfolio.returns") != null)
+    val vreturns = sells.map((a) => a.toDouble("Portfolio.returns") * multiplier)
+    val dreturns = sells.map((a) => (str2date(a("Date").toString).getMillis.toDouble / (24 * 60 * 60 * 1000)).toInt.toDouble)
+
+
+    batch.plota(dreturns, vreturns, '-', "red", "Portfolio.returns")
+
     //Red - sell
     batch.plota(dsell, vsell, '+', "red", "Sell")
 
@@ -186,6 +196,8 @@ class MarketState(val parameters: Map[String, String], val printDebug: Boolean =
     val state = tags ++ Map("budjet" -> budjet,
       "initialBudjet" -> initialBudjet,
       "commission" -> commisionMin,
+      "biggestWin" -> biggestWin,
+      "biggestLost" -> biggestLost,
       "parameters" -> parameters,
       "orders" -> orders)
 
