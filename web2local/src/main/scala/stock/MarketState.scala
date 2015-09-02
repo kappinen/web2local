@@ -67,10 +67,11 @@ class MarketState(val parameters: Map[String, String], val printDebug: Boolean =
 
   def buy(price: DataItem): MarketState = {
     if (stocks == 0 && budjet > 0) {
-      budjet -= commisionFunc(budjet)
       val dprice = buySellPrice(price) * 100
       stocks = (budjet / dprice).toInt
       budjet -= (stocks * dprice.toInt)
+      budjet -= commisionFunc((dprice*stocks).toInt)
+
       orders = orders :+ DataItem(price.source, price.dtime, price.tags ++ List("Buy"), price.data)
       if (printDebug) {
         println("Buying: " + epoc2str(price.dtime) + " for: " + buySellPrice(price))
