@@ -26,6 +26,7 @@ package common
 
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.DateTime
+import sys.process._
 
 object Utils {
   val pathResources: String = "resources"
@@ -101,4 +102,7 @@ object Utils {
   def isNotNumeric(str: String): Boolean = !isNumeric(str)
 
   def toDouble(str:String) = str.replaceAll(" ", "").replaceAll(",", ".").toDouble
+
+
+  def shutDownNow() = "shutdown now" !
 }
