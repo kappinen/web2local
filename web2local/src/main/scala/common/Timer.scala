@@ -15,7 +15,7 @@ object Timer {
     val start = System.nanoTime
     val result = block
     val end = System.nanoTime
-    println(msg + ": (" + block.getClass.getName + ") " + (end - start) + "ns" + " " + (end - start) / (1000 * 1000) + "ms " + (end - start) / (1000 * 1000 * 1000).toDouble + "s")
+    println(msg + ": (" + block.getClass.getName + ") " + (end - start) + "ns " + (end - start) / (1000 * 1000) + "ms " + (end - start) / (1000 * 1000 * 1000).toDouble + "s")
     result
   }
 
