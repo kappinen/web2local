@@ -107,4 +107,9 @@ object Regression {
     (movingAverage(u.toArray, N) zip movingAverage(d.toArray, N)).map((a) => 100 - 100.toDouble / (1 + a._1 / a._2))
   }
 
+  def sharpeRatio(returns:Array[Double], riskFreeReturn:Double): Double = {
+    (mean(returns) - riskFreeReturn) / stdDev(returns, mean(returns))
+  }
+
+
 }
