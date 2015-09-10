@@ -46,12 +46,12 @@ object Regression {
         = res2add(param, data).map((a) => a.reduce((a,b) => a + b))
 
   @Deprecated
-  def mean(data: Array[Double]): Double = data.reduce((a, b) => b + a).toDouble / data.size
+  def mean(data: Array[Double]): Double = data.sum / data.size
 
 
   /* Standard Deviation */
   def stdDev(data: Array[Double], mean:Double): Double
-        = scala.math.sqrt(data.map((a) => (a - mean)*(a - mean)).reduce((a,b) => b + a))
+        = scala.math.sqrt(data.map((a) => (a - mean)*(a - mean)).sum / data.size)
 
 
   def nstdScope(data: Array[Double]): Array[Double] = {
@@ -68,7 +68,6 @@ object Regression {
     }._1.reverse
 
 
-  @Deprecated
   def diff(data: Seq[Double]): Seq[Double] =  (data.drop(1) zip data.dropRight(1)).map((a) => a._2 - a._1)
 
   def diffProcents(data: Seq[Double]): Seq[Double] =  (data.drop(1) zip data.dropRight(1)).map((a) => a._2 / a._1)
@@ -79,6 +78,7 @@ object Regression {
    * @param x
    * @return
    */
+  @Deprecated
   def ema(data: Array[Double], x: Int): Seq[Double] = {
 
     if (data.length <= 1) {
