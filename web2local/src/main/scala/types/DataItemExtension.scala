@@ -20,9 +20,14 @@ object DataItemExtension {
     //TODO: , size: Int = 2 and slideBy
     def meanBy(key: String): Double = sequence.toDouble(key).reduce((a, b) => b + a) / sequence.size
 
+    /**
+     *
+     * @param key
+     * @return if day_1 = 12, day_2 = 11 then 11-12 as day_2
+     */
     def diffBy(key: String): Seq[DataItem] =
       (sequence.drop(1) zip sequence.dropRight(1)).
-        map((a) => a._1 ++ Map(key -> (a._2.toDouble(key) - a._1.toDouble(key))))
+        map((a) => a._1 ++ Map(key -> (a._1.toDouble(key) - a._2.toDouble(key))))
 
     def normilize(key: String): Seq[DataItem] = {
       val limits = minMaxBy(key)
