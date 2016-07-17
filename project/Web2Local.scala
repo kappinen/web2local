@@ -29,15 +29,15 @@ object Web2LocalBuild extends Build {
 //        "org.nuiton.thirdparty"     %  "Rserve"             %   "0.6-1",
 //        "org.nuiton.thirdparty"     %  "REngine"            %  "0.6-1",
 //        "org.nuiton.thirdparty"     %  "JRI"                %  "0.8-4",
-        "org.seleniumhq.selenium"   %  "selenium-java"      %  "2.33.0",
+        "org.seleniumhq.selenium"   %  "selenium-java"      %  "2.53.1",
         "net.sourceforge.htmlunit"  %  "htmlunit"           %  "2.12",
 //        "org.scalatest"             %  "scalatest_2.9.2"    %   "1.9.1",
         "com.cloudphysics"          %  "jerkson_2.10"       %   "0.6.3",
         "org.scalanlp"              %  "breeze-math_2.10"   %   "0.3",
         "org.scalanlp"              % "breeze-learn_2.10"   %   "0.3",
 //        "org.scalanlp"              % "breeze-process_2.10" %   "0.11.2",
-        "org.scalanlp"              % "breeze-viz_2.10"     %   "0.11.2",
-        "com.typesafe.akka"         % "akka-actor_2.10"     %   "2.3.3"
+        "org.scalanlp"              % "breeze-viz_2.10"     %   "0.11.2"
+//        "com.typesafe.akka"         % "akka-actor_2.10"     %   "2.3.3"
 //        "org.codehaus.jackson"      %  "jackson-core-asl"   % "1.9.12",
 //        "org.codehaus.jackson"      %  "jackson-mapper-asl" % "1.9.12"
   )))
