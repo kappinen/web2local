@@ -58,6 +58,11 @@ object Utils {
 
   def str2date(date: String, format: String = "yyyy-MM-dd"): DateTime = string2date(format, date)
 
+  def strdate2num(date: String, format: String = "yyyy-MM-dd"): Double = {
+    val dateValue = string2date(format, date)
+    dateValue.year().get() * 10000l + dateValue.monthOfYear().get() * 100l + dateValue.dayOfMonth().get()
+  }
+
   def date2str(date: DateTime, format: String = "yyyy-MM-dd"): String = date2string(format, date)
 
   private def string2date(format: String, date: String): DateTime = DateTimeFormat.forPattern(format).parseDateTime(date)
@@ -101,7 +106,13 @@ object Utils {
 
   def isNotNumeric(str: String): Boolean = !isNumeric(str)
 
-  def toDouble(str:String) = str.replaceAll(" ", "").replaceAll(",", ".").toDouble
+  def toDouble[T](str: T): Double = str match {
+    case _: Double => str.asInstanceOf[Double]
+    case _: Int => Int.int2double(str.asInstanceOf[Int])
+    case _: Long => Long.long2double(str.asInstanceOf[Long])
+    case _: String => str.toString.replaceAll(" ", "").replaceAll(",", ".").toDouble
+    case _ => str.toString.replaceAll(" ", "").replaceAll(",", ".").toDouble
+  }
 
 
   def shutDownNow() = "shutdown now" !
