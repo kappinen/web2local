@@ -11,7 +11,7 @@ package common
 object Timer {
   def time[R](block: => R): R = timer(block)("Elapsed time")
 
-  def timer[R](block: => R)(msg:String): R = {
+  def timer[R](block: => R)(msg:String = "Elapsed time"): R = {
     val start = System.nanoTime
     val result = block
     val end = System.nanoTime
