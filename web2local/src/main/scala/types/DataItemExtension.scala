@@ -1,5 +1,9 @@
 package types
 
+import common.XConstants
+
+import scala.collection.{mutable, Traversable}
+import types.DataExtension._
 /**
  * Created by Evgeni Kappinen on 5/24/14.
  */
@@ -25,9 +29,9 @@ object DataItemExtension {
      * @param key
      * @return if day_1 = 12, day_2 = 11 then 11-12 as day_2
      */
-    def diffBy(key: String): Seq[DataItem] =
+    def diffBy(key: String, newKey: String = null): Seq[DataItem] =
       (sequence.drop(1) zip sequence.dropRight(1)).
-        map((a) => a._1 ++ Map(key -> (a._1.toDouble(key) - a._2.toDouble(key))))
+        map((a) => a._1 ++ Map({if (newKey == null) key else newKey} -> (a._1.toDouble(key) - a._2.toDouble(key))))
 
     def normilize(key: String): Seq[DataItem] = {
       val limits = minMaxBy(key)
@@ -54,7 +58,61 @@ object DataItemExtension {
       })
     }
 
+    def sma(x: Integer, name: String = null, sname: String = XConstants.NORM_PRICE) =
+      sequence.slidingBy( if (name == null) { "SMA" + x } else { name } , x)(a => a.toDouble(XConstants.NORM_PRICE).sum / a.size.toDouble)
+
+    def rsi(x: Integer, name: String = null, rname: String = XConstants.NORM_PRICE)(movingAverage: (Array[Double], Int) => Array[Double] = analytics.Regression.sma) = {
+      val rsiArray = analytics.Regression.rsi(movingAverage)(sequence.toDouble(rname).toArray, x)
+      (sequence.drop(1) zip rsiArray).map(a => a._1 ++ Map({if (name == null) { "RSI" + x } else { name }} -> a._2))
+    }
+
+    def getNormPrice(normPriceName: String = XConstants.NORM_PRICE, a: String = "High price", b: String = "Low price"): Seq[DataItem] = {
+      sequence.slidingBy(normPriceName, 1)((item) => {
+        (item.toDouble(a).sum + item.toDouble(b).sum) / 2d
+      })
+    }
   }
+
+  implicit class DataItemHelperSeq(sequence: Traversable[Seq[DataItem]]) {
+
+    def apply(key: String): Seq[DataItem] = getBySource(key)
+
+    def getBySource(name: String): Seq[DataItem] =
+      sequence.find((a) => name.equals(a(0).source)).getOrElse(Seq())
+
+
+    def pairRun[T](func: (Seq[DataItem], Seq[DataItem]) => T, mergeName: String = "Date", printProgress: Boolean = false): Seq[(String, T)] = {
+      val map = mutable.ListMap[String, T]()
+
+      val totalCount = (sequence.size * sequence.size)
+      val start = System.currentTimeMillis()
+      var count = 0
+      sequence.foreach(aa => {
+        sequence.foreach(bb => {
+
+          count = count + 1
+          if (printProgress && (count % 100 == 0)) {
+            val progressed = (System.currentTimeMillis() - start) / count.toDouble
+            println("Calculated:" + count + " out of:" + totalCount +
+              " left:" + (common.Utils.millisDiffToTime((totalCount - count) * progressed)))
+          }
+
+          if (map.contains(aa(0).source + "," + bb(0).source) ||
+            map.contains(bb(0).source + "," + aa(0).source) ||
+            bb(0).source.equals(aa(0).source)) {
+          } else {
+            val merged = DataItemUtil.mergeBy((a: DataItem, b: DataItem) => a(mergeName).equals(b(mergeName)))(aa, bb)
+            map.put(aa(0).source + "," + bb(0).source, func(merged(0), merged(1)))
+          }
+
+        })
+      })
+
+      map.toSeq
+    }
+
+  }
+
 
   //http://rosettacode.org/wiki/Averages/Median
   def median(sequence: Array[Double]): Double = {
