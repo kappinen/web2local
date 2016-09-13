@@ -114,6 +114,15 @@ object Utils {
     case _ => str.toString.replaceAll(" ", "").replaceAll(",", ".").toDouble
   }
 
+  def trunc(value: Double, trunc: Int): Double = ("%." + trunc + "f").format(value).toDouble
+
+  def millisDiffToTime(value: Double): String= {
+    val normTime = value / 1000d
+    val minutes = (normTime / 60).toInt
+    val fraction = (normTime / 60d) - minutes
+
+    minutes + "m " + trunc(fraction, 1) + "s , in seconds:" + (trunc(normTime, 1) + ", in millis:" + trunc(value, 1))
+  }
 
   def shutDownNow() = "shutdown now" !
 }
