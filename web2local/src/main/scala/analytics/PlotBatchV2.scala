@@ -41,9 +41,9 @@ class PlotBatchV2(title: String = "") extends JPanel {
     dateAxis.setUpperMargin(0.02)
 
 
-    val chart: JFreeChart = createTimeSeriesChart("", "Date", "Series", null, true)
+    val chart: JFreeChart = createTimeSeriesChart("", "Date", "OHLC", null, true)
 
-    val plot: XYPlot = new XYPlot(null, dateAxis, new NumberAxis("Series"), new SamplingXYLineRenderer())
+    val plot: XYPlot = new XYPlot(null, dateAxis, new NumberAxis("OHLC"), new SamplingXYLineRenderer())
 
     ohlcData.foreach(aa => {
       val plotCount = plot.getRendererCount
