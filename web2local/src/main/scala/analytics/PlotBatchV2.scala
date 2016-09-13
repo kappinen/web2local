@@ -5,8 +5,8 @@ import java.text.{DecimalFormat, SimpleDateFormat}
 import javax.swing.{JFrame, JPanel}
 
 import common.Utils._
-import org.jfree.chart.axis.{DateAxis, NumberAxis}
-import org.jfree.chart.labels.StandardXYToolTipGenerator
+import org.jfree.chart.axis.{AxisLocation, DateAxis, NumberAxis}
+import org.jfree.chart.labels.{XYToolTipGenerator, StandardXYToolTipGenerator}
 import org.jfree.chart.plot.{PlotOrientation, CombinedDomainXYPlot, XYPlot}
 import org.jfree.chart.renderer.xy._
 import org.jfree.chart.urls.StandardXYURLGenerator
@@ -28,6 +28,7 @@ import scala.collection.mutable
  */
 class PlotBatchV2(title: String = "") extends JPanel {
   val data: ListBuffer[(String, Seq[DataItem])] = ListBuffer()
+  val ohlcData: ListBuffer[(String, Seq[DataItem])] = ListBuffer()
   val subData: ListBuffer[(String, Seq[DataItem])] = ListBuffer()
   val frame: JFrame = new JFrame("Plot")
 
@@ -39,58 +40,105 @@ class PlotBatchV2(title: String = "") extends JPanel {
     dateAxis.setLowerMargin(0.02)
     dateAxis.setUpperMargin(0.02)
 
-    val chart: JFreeChart = createTimeSeriesChart("", "Date", "Series", null, true, true, false)
 
-    val plot: XYPlot = new XYPlot(null, new DateAxis("Date"), new NumberAxis("Series"), null)
-    data.zipWithIndex.foreach(dat => {
-      val volumeDataset: TimeSeriesCollection = new TimeSeriesCollection()
+    val chart: JFreeChart = createTimeSeriesChart("", "Date", "Series", null, true)
 
-      val volumeSeries: TimeSeries = new TimeSeries(dat._1._2(0).source + ":" + dat._1._1 + ":" + dat._2)
-      val volumeAxis: NumberAxis = new NumberAxis(dat._1._2(0).source + ":" + dat._1._1 + ":" + dat._2)
-      volumeAxis.setNumberFormatOverride(new DecimalFormat("0"))
+    val plot: XYPlot = new XYPlot(null, dateAxis, new NumberAxis("Series"), new SamplingXYLineRenderer())
 
-      dat._1._2.foreach(dataItem => {
-        val date = new FixedMillisecond(str2date(dataItem("Date")).toDate)
-        volumeSeries.add(date, dataItem.toDouble(dat._1._1));
+    ohlcData.foreach(aa => {
+      val plotCount = plot.getRendererCount
+      val candlestickDataset: OHLCSeriesCollection = new OHLCSeriesCollection()
+      val ohlcSeries = new OHLCSeries(aa._1)
+
+      aa._2.foreach(bb => {
+        val date = new FixedMillisecond(str2date(bb("Date")).toDate)
+        ohlcSeries.add(date, bb.toDouble("Open"), bb.toDouble("High price"), bb.toDouble("Low price"), bb.toDouble("Closing price"));
       })
 
-      println("Added size:" + dat._1._2.size + " tag:" + dat._1._1 + " total:" + data.size)
-      volumeDataset.addSeries(volumeSeries)
-      plot.setDataset(dat._2 + 1, volumeDataset)
-      plot.setRenderer(dat._2 + 1, new StandardXYItemRenderer())
+      candlestickDataset.addSeries(ohlcSeries)
+
+      plot.setDataset(plotCount + 1, candlestickDataset)
+      plot.setRenderer(plotCount + 1, new CandlestickRenderer(CandlestickRenderer.WIDTHMETHOD_AVERAGE, false,
+        new StandardXYToolTipGenerator("{2} - {1}", new SimpleDateFormat("dd.MM.yyy"), new DecimalFormat("0.00"))))
     })
 
+    data.foreach(dat => {
+      val volumeDataset: TimeSeriesCollection = new TimeSeriesCollection()
+      val plotCount = plot.getRendererCount
+      val volumeSeries: TimeSeries = new TimeSeries(dat._2(0).source + ":" + dat._1 + ":" + plotCount)
+      val volumeAxis: NumberAxis = new NumberAxis(dat._2(0).source + ":" + dat._1 + ":" + plotCount)
+      volumeAxis.setNumberFormatOverride(new DecimalFormat("0"))
+
+      dat._2.foreach(dataItem => {
+        val date = new FixedMillisecond(str2date(dataItem("Date")).toDate)
+        volumeSeries.add(date, dataItem.toDouble(dat._1));
+      })
+
+      println("Added size:" + dat._2.size + " tag:" + dat._1 + " total:" + data.size)
+      volumeDataset.addSeries(volumeSeries)
+      plot.setDataset(plotCount + 1, volumeDataset)
+      val generator = new StandardXYItemRenderer()
+      generator.setBaseToolTipGenerator(new XYToolTipGenerator() {
+        override def generateToolTip(xyDataset: XYDataset, series: Int, category: Int): String = {
+          //          println(xyDataset.getXValue(series, category) + ":" + xyDataset.getYValue(series, category))
+          xyDataset.getYValue(series, category).toString
+        }
+      })
+
+      plot.setRenderer(plotCount + 1, generator)
+    })
+
+    plot.setDomainGridlinesVisible(true)
+    plot.setDomainMinorGridlinesVisible(true)
+    plot.setRangeAxisLocation(AxisLocation.BOTTOM_OR_RIGHT)
+    //    ChartFactory.getChartTheme().apply(chart)
     chart.getXYPlot.asInstanceOf[CombinedDomainXYPlot].add(plot, 3)
+
 
     if (!subData.isEmpty) {
 
-      val subPlot: XYPlot = new XYPlot(null, new DateAxis("Date"), new NumberAxis("Series"), null)
-      subData.zipWithIndex.foreach(dat => {
+      val subPlot: XYPlot = new XYPlot(null, dateAxis, new NumberAxis("Series"), new SamplingXYLineRenderer())
+      subData.foreach(dat => {
         val volumeDataset: TimeSeriesCollection = new TimeSeriesCollection()
 
-        val volumeSeries: TimeSeries = new TimeSeries(dat._1._2(0).source + ":" + dat._1._1 + ":" + dat._2)
-        val volumeAxis: NumberAxis = new NumberAxis(dat._1._2(0).source + ":" + dat._1._1 + ":" + dat._2)
+        val volumeSeries: TimeSeries = new TimeSeries(dat._2(0).source + ":" + dat._1 + ":" + subPlot.getRendererCount)
+        val volumeAxis: NumberAxis = new NumberAxis(dat._2(0).source + ":" + dat._1 + ":" + subPlot.getRendererCount)
         volumeAxis.setNumberFormatOverride(new DecimalFormat("0"))
 
-        dat._1._2.foreach(dataItem => {
+        dat._2.foreach(dataItem => {
           val date = new FixedMillisecond(str2date(dataItem("Date")).toDate)
-          volumeSeries.add(date, dataItem.toDouble(dat._1._1));
+          volumeSeries.add(date, dataItem.toDouble(dat._1));
         })
 
-        println("Added size:" + dat._1._2.size + " tag:" + dat._1._1 + " total:" + data.size)
+        println("Added size:" + dat._2.size + " tag:" + dat._1 + " total:" + data.size)
         volumeDataset.addSeries(volumeSeries)
-        subPlot.setDataset(dat._2 + 1, volumeDataset)
-        subPlot.setRenderer(dat._2 + 1, new StandardXYItemRenderer())
+        subPlot.setDataset(subPlot.getRendererCount + 1, volumeDataset)
+        subPlot.setRenderer(subPlot.getRendererCount + 1, new StandardXYItemRenderer())
       })
+      subPlot.setDomainGridlinesVisible(true)
+      subPlot.setDomainMinorGridlinesVisible(true)
+      subPlot.setRangeAxisLocation(AxisLocation.BOTTOM_OR_RIGHT)
       chart.getXYPlot.asInstanceOf[CombinedDomainXYPlot].add(subPlot, 1)
-
     }
 
-    chart.getXYPlot.setBackgroundPaint(Color.lightGray)
-    chart.getXYPlot.setDomainGridlinePaint(Color.white);
-    chart.getXYPlot.setRangeGridlinePaint(Color.white);
+    //    val subplots = chart.getXYPlot.asInstanceOf[CombinedDomainXYPlot].getSubplots.iterator()
+    //    while (subplots.hasNext) {
+    //      val ssublot = subplots.next().asInstanceOf[XYPlot]
+    //      ssublot.setBackgroundPaint(Color.white)
+    //      ssublot.setDomainGridlinePaint(Color.black)
+    //      ssublot.setRangeGridlinePaint(Color.black);
+    //      ssublot.setDomainGridlinesVisible(true)
+    //      ssublot.setDomainMinorGridlinesVisible(true)
+    //    }
+
+    //    chart.getXYPlot.setBackgroundPaint(Color.lightGray)
+    //    chart.getXYPlot.setDomainGridlinePaint(Color.black);
+    //    chart.getXYPlot.setRangeGridlinePaint(Color.black);
+    //    chart.getXYPlot.setDomainGridlinesVisible(true)
+    //    chart.getXYPlot.setDomainMinorGridlinesVisible(true)
 
 
+    //TODO: http://www.jfree.org/forum/viewtopic.php?f=3&t=115213
     //    chart.removeLegend()
     chart
   }
@@ -99,8 +147,14 @@ class PlotBatchV2(title: String = "") extends JPanel {
     data += ((dataName, items))
     this
   }
+
   def addSubSeries(items: Seq[DataItem], dataName: String = "Volume"): PlotBatchV2 = {
     subData += ((dataName, items))
+    this
+  }
+
+  def addCandleSeries(items: Seq[DataItem], dataName: String = "Volume"): PlotBatchV2 = {
+    ohlcData += ((dataName, items))
     this
   }
 
@@ -133,39 +187,29 @@ class PlotBatchV2(title: String = "") extends JPanel {
                             timeAxisLabel: String,
                             valueAxisLabel: String,
                             dataset: XYDataset,
-                            legend: Boolean,
-                            tooltips: Boolean,
-                            urls: Boolean): JFreeChart = {
+                            legend: Boolean): JFreeChart = {
     val timeAxis: DateAxis = new DateAxis(timeAxisLabel)
+    timeAxis.setDateFormatOverride(new SimpleDateFormat("dd.MM.yyyy"))
     timeAxis.setLowerMargin(0.02D)
     timeAxis.setUpperMargin(0.02D)
 
     val valueAxis: NumberAxis = new NumberAxis(valueAxisLabel)
     valueAxis.setAutoRangeIncludesZero(false)
 
-//    val plot: XYPlot = new XYPlot(dataset, timeAxis, valueAxis, null)
     val plot: CombinedDomainXYPlot = new CombinedDomainXYPlot(timeAxis)
     plot.setOrientation(PlotOrientation.VERTICAL);
 
     plot.setGap(3.0)
-    var toolTipGenerator: StandardXYToolTipGenerator = null
-
-    if (tooltips) {
-      toolTipGenerator = StandardXYToolTipGenerator.getTimeSeriesInstance()
-    }
-
-    var urlGenerator: StandardXYURLGenerator = null
-    if (urls) {
-      urlGenerator = new StandardXYURLGenerator()
-    }
 
     val renderer: XYLineAndShapeRenderer = new XYLineAndShapeRenderer(true, false)
-    renderer.setBaseToolTipGenerator(toolTipGenerator)
-    renderer.setURLGenerator(urlGenerator)
+    renderer.setBaseToolTipGenerator(null) //StandardXYToolTipGenerator.getTimeSeriesInstance()
+    renderer.setURLGenerator(null) //new StandardXYURLGenerator()
     plot.setRenderer(renderer)
 
+
     val chart: JFreeChart = new JFreeChart(title, JFreeChart.DEFAULT_TITLE_FONT, plot, legend)
-    new StandardChartTheme("JFree").apply(chart)
+    //    ChartFactory.getChartTheme().apply(chart)
+    StandardChartTheme.createLegacyTheme().apply(chart)
     chart
   }
 }
