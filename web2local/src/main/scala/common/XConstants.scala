@@ -5,4 +5,5 @@ package common
  */
 object XConstants {
   val NORM_PRICE = "Norm price"
+  val VOLUME = "Volume"
 }

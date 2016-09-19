@@ -24,19 +24,31 @@
 
 package sources
 
-import scala.io.Source._
-import types.DataItem
 import java.net.URL
+
+import io.CacheStorage
+import types.DataItem
+
+import scala.io.Source._
 
 abstract class DataSourceSimple extends DataSource {
 
-  protected def parse(fetchData:(String) => String)(url:String): DataItem
-  protected def parseItems(fetchData:(String) => String)(opts:Map[String,String]): Seq[DataItem]
+  protected def parse(fetchData: (String) => String)(url: String): DataItem
 
-  def ftext(url:String): String =  fromInputStream(new URL(url).openStream).getLines.mkString("\n")
+  protected def parseItems(fetchData: (String) => String)(opts: Map[String, String]): Seq[DataItem]
 
-  def gitem(criteria:String): DataItem = parse((url) => ftext(url))(criteria)
+  def ftext(url: String): String = {
+    val cache = CacheStorage.getCache(url)
+    if (cache.nonEmpty) {
+      return cache
+    }
 
-  def gitems(criteria:Map[String,String]): Seq[DataItem] = parseItems((url) => ftext(url))(criteria)
+    println("[DataSourceSimple] fetching:" + url)
+    CacheStorage.putCache(url, fromInputStream(new URL(url).openStream).getLines.mkString("\n"))
+  }
+
+  def gitem(criteria: String): DataItem = parse((url) => ftext(url))(criteria)
+
+  def gitems(criteria: Map[String, String]): Seq[DataItem] = parseItems((url) => ftext(url))(criteria)
 
 }

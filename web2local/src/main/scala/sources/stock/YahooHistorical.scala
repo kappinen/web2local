@@ -4,7 +4,10 @@ import sources.DataSourceSimple
 import io.LocalStorage._
 import common.Utils._
 import org.joda.time.DateTime
+import sources.stock.GoogleHistorical._
 import types.DataItem
+
+import scala.reflect.io.File
 
 /**
  * Created with IntelliJ IDEA.
@@ -15,8 +18,6 @@ import types.DataItem
 object YahooHistorical extends DataSourceSimple {
   val name: String = "YahooHistorical"
 
-  val urls:Map[String, String] =
-    Map("Randgold Resources Limited" -> "GOLD")
 
 
   protected def parse(fetchData: (String) => String)(url: String): DataItem =
@@ -26,62 +27,33 @@ object YahooHistorical extends DataSourceSimple {
     csvFromString(srcParser)(opts("url"), fetchData(opts("url")), ",")
 
 
-  def buildUrl(indx: String, fromDate: String, toDate: String): String = {
-    //    val indx = "GOLD"
+  def yahooUrlFormatter(indx: String, fromDate: String = "1990-01-01", toDate: String = date2str(new DateTime())): String = {
     val startDate = str2date(fromDate)
     val endDate = str2date(toDate)
 
-
-
     val header = "http://ichart.finance.yahoo.com/table.csv?s="
     val toDateString = "&d=" + (endDate.getMonthOfYear - 1) + "&e=" + endDate.getDayOfMonth + "&f=" + endDate.getYear
-//    val toDateString = DateTimeFormat.forPattern("'&d='MM'&e='dd'&f='yyyy").print(endDate)
+
     val fromDateString = "&g=d&a=" + (startDate.getMonthOfYear - 1) + "&b=" + startDate.getDayOfMonth + "&c=" + startDate.getYear
-//    val fromDateString = DateTimeFormat.forPattern("'&g=d&a='MM'&b='dd'&c='yyyy").print(startDate)
+
     val tail = "&ignore=.csv"
 
     header + indx + toDateString + fromDateString + tail
   }
 
-  def run() = {
-    urls.map((url) =>
-      csvFromString(srcParser)(url._1, ftext(url._2), ","))
 
-//    import stock.YahooHistorical._
+  def loadLatest(symbol: String, startDate: String = "1990-01-01", endDate: String = date2str(new DateTime())): Seq[DataItem] = {
+    csvFromString(
+      srcYahooFinance)(symbol,
+        ftext(yahooUrlFormatter(symbol, startDate, endDate)).replace("\uFEFF", ""),
+        ",")
+  }
 
-    val url2 = buildUrl("GOLD", "2013-01-01", date2str(new DateTime))
-    val gold = csvFromString(srcParser)(url2, ftext(url2), ",")
+  def test(): Unit = {
 
+    val oil = loadLatest("OIL", "2001-01-01")
 
-    val url = buildUrl("^OMXH25", "2013-01-01", date2str(new DateTime))
-    val omx = csvFromString(srcParser)(url, ftext(url), ",")
-
-
-    omx.filter((a) => a("Date").equals("2013-08-29"))
-
-
-    omx.find((a) => a("Date").equals("2013-08-29")).get
-    gold.find((a) => a("Date").equals("2013-08-29")).get
-
-
-    def mergeBy(a:DataItem) : Any = a("Date")
-    val ii = omx.map((a) => mergeBy(a))
-
-    val leading = omx
-    val process = Seq(gold)
-
-
-
-
-    def hasNull(a:Seq[DataItem]):Boolean = !a.map((zz) => zz != null).reduce((d,e) => d && e)
-    val zz = gold.map((a) => Seq(a, omx.find((data) => mergeBy(data).equals(mergeBy(a))).getOrElse(null)))
-    val di = zz.filterNot((a) => hasNull(a))
-
-
-
-    val res = leading.map((leader) => Seq(leader) ++ process.map((follower) => follower.find((data) =>
-                            mergeBy(data).equals(mergeBy(leader))).getOrElse(null)))
-
+    csvFromString(srcYahooFinance)("test",File("/tmp/web2local/a84dd14747be278d4edb67739839448.cache").slurp(), ",")
   }
 
 }

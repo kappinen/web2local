@@ -5,6 +5,7 @@ import java.text.{DecimalFormat, SimpleDateFormat}
 import javax.swing.{JFrame, JPanel}
 
 import common.Utils._
+import common.XConstants
 import org.jfree.chart.axis.{AxisLocation, DateAxis, NumberAxis}
 import org.jfree.chart.labels.{XYToolTipGenerator, StandardXYToolTipGenerator}
 import org.jfree.chart.plot.{PlotOrientation, CombinedDomainXYPlot, XYPlot}
@@ -40,7 +41,6 @@ class PlotBatchV2(title: String = "") extends JPanel {
     dateAxis.setLowerMargin(0.02)
     dateAxis.setUpperMargin(0.02)
 
-
     val chart: JFreeChart = createTimeSeriesChart("", "Date", "OHLC", null, true)
 
     val plot: XYPlot = new XYPlot(null, dateAxis, new NumberAxis("OHLC"), new SamplingXYLineRenderer())
@@ -48,7 +48,7 @@ class PlotBatchV2(title: String = "") extends JPanel {
     ohlcData.foreach(aa => {
       val plotCount = plot.getRendererCount
       val candlestickDataset: OHLCSeriesCollection = new OHLCSeriesCollection()
-      val ohlcSeries = new OHLCSeries(aa._1)
+      val ohlcSeries = new OHLCSeries(aa._2(0).source + ":OHLC")
 
       aa._2.foreach(bb => {
         val date = new FixedMillisecond(str2date(bb("Date")).toDate)
@@ -65,8 +65,8 @@ class PlotBatchV2(title: String = "") extends JPanel {
     data.foreach(dat => {
       val volumeDataset: TimeSeriesCollection = new TimeSeriesCollection()
       val plotCount = plot.getRendererCount
-      val volumeSeries: TimeSeries = new TimeSeries(dat._2(0).source + ":" + dat._1 + ":" + plotCount)
-      val volumeAxis: NumberAxis = new NumberAxis(dat._2(0).source + ":" + dat._1 + ":" + plotCount)
+      val volumeSeries: TimeSeries = new TimeSeries(dat._2(0).source + ":" + dat._1)
+      val volumeAxis: NumberAxis = new NumberAxis(dat._2(0).source + ":" + dat._1)
       volumeAxis.setNumberFormatOverride(new DecimalFormat("0"))
 
       dat._2.foreach(dataItem => {
@@ -101,8 +101,8 @@ class PlotBatchV2(title: String = "") extends JPanel {
       subData.foreach(dat => {
         val volumeDataset: TimeSeriesCollection = new TimeSeriesCollection()
 
-        val volumeSeries: TimeSeries = new TimeSeries(dat._2(0).source + ":" + dat._1 + ":" + subPlot.getRendererCount)
-        val volumeAxis: NumberAxis = new NumberAxis(dat._2(0).source + ":" + dat._1 + ":" + subPlot.getRendererCount)
+        val volumeSeries: TimeSeries = new TimeSeries(dat._2(0).source + ":" + dat._1)
+        val volumeAxis: NumberAxis = new NumberAxis(dat._2(0).source + ":" + dat._1)
         volumeAxis.setNumberFormatOverride(new DecimalFormat("0"))
 
         dat._2.foreach(dataItem => {
@@ -110,7 +110,6 @@ class PlotBatchV2(title: String = "") extends JPanel {
           volumeSeries.add(date, dataItem.toDouble(dat._1));
         })
 
-        println("Added size:" + dat._2.size + " tag:" + dat._1 + " total:" + data.size)
         volumeDataset.addSeries(volumeSeries)
         subPlot.setDataset(subPlot.getRendererCount + 1, volumeDataset)
         subPlot.setRenderer(subPlot.getRendererCount + 1, new StandardXYItemRenderer())
@@ -143,17 +142,17 @@ class PlotBatchV2(title: String = "") extends JPanel {
     chart
   }
 
-  def addSeries(items: Seq[DataItem], dataName: String = "Volume"): PlotBatchV2 = {
+  def addSeries(items: Seq[DataItem], dataName: String): PlotBatchV2 = {
     data += ((dataName, items))
     this
   }
 
-  def addSubSeries(items: Seq[DataItem], dataName: String = "Volume"): PlotBatchV2 = {
+  def addSubSeries(items: Seq[DataItem], dataName: String): PlotBatchV2 = {
     subData += ((dataName, items))
     this
   }
 
-  def addCandleSeries(items: Seq[DataItem], dataName: String = "Volume"): PlotBatchV2 = {
+  def addCandleSeries(items: Seq[DataItem], dataName: String = XConstants.NORM_PRICE): PlotBatchV2 = {
     ohlcData += ((dataName, items))
     this
   }

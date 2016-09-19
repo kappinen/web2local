@@ -25,15 +25,17 @@
 package io
 
 
-import scala.reflect.io.{File, Directory}
-import types.{DataItemUtil, DataItem}
-import common.Utils._
 import common.Utils
+import common.Utils._
+import types.{DataItem, DataItemUtil}
+
+import scala.reflect.io.{Directory, File}
 
 
 object LocalStorage {
 
-  private def getReqId(data: String): String = {
+
+   def md5sum(data: String): String = {
     import java.security.MessageDigest
 
     val bytes: Array[Byte] = MessageDigest.getInstance("MD5").digest(data.getBytes)
@@ -48,7 +50,7 @@ object LocalStorage {
       val dirName = Utils.pathResources + java.io.File.separator + sourceName;
       Directory(dirName).createDirectory(true, false)
 
-      val writer = File(dirName + java.io.File.separator + getReqId(dataItem.source) + ".json").writer(false)
+      val writer = File(dirName + java.io.File.separator + md5sum(dataItem.source) + ".json").writer(false)
 
       try {
         writer.write(DataItemUtil.obj2str(dataItem))
@@ -64,7 +66,7 @@ object LocalStorage {
     try {
       val file = File(Utils.pathResources + java.io.File.separator
         + sourceName + java.io.File.separator
-        + getReqId(id) + ".json")
+        + md5sum(id) + ".json")
 
       DataItemUtil.str2obj(file.slurp())
     } catch {
@@ -149,6 +151,15 @@ object LocalStorage {
     })
   }
 
+  def srcParserFile(source: String, data: Array[Array[String]]): Seq[DataItem] = {
+    val header = data.head
+
+    data.drop(1).map((a) => {
+      val data = (header zip a).toMap
+      DataItem(source, System.currentTimeMillis(), List(), data)
+    })
+  }
+
 
   /** http://www.oanda.com/currency/historical-rates/ */
   def srcParserOanda(source: String, data: Array[Array[String]]): scala.collection.mutable.Seq[DataItem] = {
@@ -168,7 +179,7 @@ object LocalStorage {
       isNumeric(data("Closing price")) && isNumeric(data("Low price")) && isNumeric(data("High price")) && isNumeric(data("Total volume"))
     })
 
-    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + (tdata.size - filtered.size) + " pros:" + (1 - filtered.size / tdata.size.toDouble) * 100)
+    println("[+<-] [LocalStorage] loaded : " + source + " lines " + tdata.size + " filtered:" + (tdata.size - filtered.size) + " pros:" + (1 - filtered.size / tdata.size.toDouble) * 100)
 
     filtered.map((a) => {
       val data = (header zip a).toMap
@@ -219,6 +230,29 @@ object LocalStorage {
         str2date(data("Date"), "dd-MMM-yy").getMillis, List(),
         data ++ Map(
           "Date" -> date2str(str2date(data("Date"), "dd-MMM-yy")),
+          "Closing price" -> toDouble(data("Close")),
+          "Low price" -> toDouble(data("Low")),
+          "High price" -> toDouble(data("High"))))
+    })
+  }
+
+  def srcYahooFinance(source: String, tdata: Array[Array[String]]): Seq[DataItem] = {
+    val header = tdata.head
+
+    val filtered = tdata.drop(1).filter((a) => {
+      val data = (header zip a).toMap
+      isNumeric(data("High")) && isNumeric(data("Low")) && isNumeric(data("Close"))
+    })
+
+    println("[+<-] Loaded : " + source + " lines " + tdata.size + " filtered:" + (tdata.size - filtered.size) + " pros:" + (1 - filtered.size / tdata.size.toDouble) * 100)
+
+    filtered.map((a) => {
+      val data = (header zip a).toMap
+
+      DataItem(source,
+        str2date(data("Date"), "yyyy-MM-dd").getMillis, List(),
+        data ++ Map(
+          "Date" -> date2str(str2date(data("Date"), "yyyy-MM-dd")),
           "Closing price" -> toDouble(data("Close")),
           "Low price" -> toDouble(data("Low")),
           "High price" -> toDouble(data("High"))))

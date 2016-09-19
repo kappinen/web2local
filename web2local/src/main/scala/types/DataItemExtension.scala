@@ -59,11 +59,25 @@ object DataItemExtension {
     }
 
     def sma(x: Integer, name: String = null, sname: String = XConstants.NORM_PRICE) =
-      sequence.slidingBy( if (name == null) { "SMA" + x } else { name } , x)(a => a.toDouble(XConstants.NORM_PRICE).sum / a.size.toDouble)
+      sequence.slidingBy( if (name == null) { "SMA" + x } else { name } , x)(a => a.toDouble(sname).sum / a.size.toDouble)
+
+    def vsma(x: Integer, name: String = null, sname: String = XConstants.NORM_PRICE, volumeName:String = XConstants.VOLUME) =
+      sequence.slidingBy( if (name == null) { "VSMA" + x } else { name } , x)(a => (a.toDouble(XConstants.NORM_PRICE) * a.toDouble(volumeName)).sum / a.toDouble(volumeName).sum.toDouble)
 
     def rsi(x: Integer, name: String = null, rname: String = XConstants.NORM_PRICE)(movingAverage: (Array[Double], Int) => Array[Double] = analytics.Regression.sma) = {
       val rsiArray = analytics.Regression.rsi(movingAverage)(sequence.toDouble(rname).toArray, x)
       (sequence.drop(1) zip rsiArray).map(a => a._1 ++ Map({if (name == null) { "RSI" + x } else { name }} -> a._2))
+    }
+
+    def volatility() : Double = {
+      sequence.getNormPrice().slidingBy("Returns price", 2)(cc => {
+        val norm = cc.toDouble(XConstants.NORM_PRICE)
+        if ((norm(0) / norm(1).toDouble) > 1d) {
+          (norm(0) / norm(1).toDouble) - 1d
+        } else {
+          1d - (norm(0) / norm(1).toDouble)
+        }
+      }).toDouble("Returns price").unbiasstdev()
     }
 
     def getNormPrice(normPriceName: String = XConstants.NORM_PRICE, a: String = "High price", b: String = "Low price"): Seq[DataItem] = {

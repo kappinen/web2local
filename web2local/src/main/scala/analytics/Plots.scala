@@ -24,6 +24,7 @@
 
 package analytics
 
+import analytics.Regression._
 import breeze.plot._
 import common.Utils._
 import types.DataItem
@@ -81,20 +82,60 @@ object Plots {
     plotN += breeze.plot.plot(x, y, style)
   }
 
+  //https://en.wikipedia.org/wiki/Percentile
+  //https://github.com/haifengl/smile/blob/24e48593b703d747f80905ca8f290b7d2994c514/plot/src/main/java/smile/plot/QQPlot.java
+  def ordinalRank(percentile: Integer, size: Integer): Double = {
+    (percentile / 100d) * size.toDouble
+  }
 
-  def hist(x: Seq[Double]) = {
+  def qqpplot(x: Seq[Double], y: Seq[Double]) = {
+    val xsorted = x.sorted
+    val ysorted = y.sorted
+
+    val size = Math.min(x.length, y.length)
+
+    val pquntiles = (0 to 99).map(percentile => {
+      (xsorted(Math.round((percentile / 100d) * x.length.toDouble).toInt),
+        ysorted(Math.round((percentile / 100d) * y.length.toDouble).toInt))
+    })
+
+    plot(pquntiles.map(a => a._1), pquntiles.map(a => a._2))
+  }
+
+  def qqplot(x: Seq[Double], y: Seq[Double]) = {
+    val xsorted = x.sorted
+    val ysorted = y.sorted
+
+    val size = Math.min(x.length, y.length)
+
+    val quntiles = (0 to size - 1).map((a) => {
+      val p = (a + 1) / (size + 1.0d)
+      (xsorted(Math.round(p * x.length.toDouble).toInt),
+        ysorted(Math.round(p * y.length.toDouble).toInt))
+    })
+
+    plot(quntiles.map(a => a._1), quntiles.map(a => a._2))
+    val array = Regression.regress(quntiles.map(a => a._1).toArray, quntiles.map(a => a._2).toArray)
+    plotx((1 to size).map(x=> array(1)*x + array(0)))
+  }
+
+  def hist(x: Seq[Double], bins : HistogramBins = 20, name : String = null) = {
     figure.clear()
     val p = figure.subplot(0)
-    p += breeze.plot.hist(x)
+    p += breeze.plot.hist(x, bins, name)
   }
 
   def plotx(data: Seq[Double]*) = {
     data.map((chart) => plota((1 to chart.size).map((a) => a.asInstanceOf[Double]), chart, '-'))
   }
 
+  def plotxLine(data: Seq[Double]*) = {
+    data.map((chart) => plota((1 to chart.size).map((a) => a.asInstanceOf[Double]), simpleFit(diffLeft(chart)), '-'))
+  }
+
 
   def plotWithDate(data: Seq[DataItem], dataKey: String) =
-    plota(data.map((a) => (str2date(a("Date").toString).getMillis.toDouble / (24 * 60 * 60 * 1000)).toInt.toDouble), data.toDouble(dataKey), '-')
+    plota(data.map((a) => a.toMillis("Date")), data.toDouble(dataKey), '-')
 
 
   implicit class PlotsHelper(sequence: Seq[DataItem]) {
@@ -116,8 +157,24 @@ object Plots {
       series += breeze.plot.plot(x, y, style, colorcode, name, lines, shapes, labels, tips)
     }
 
-    def draw(): Unit = plotN.++=(series)
+    def draw(): Unit = {
+//      plotN.legend = true
+      plotN.++=(series)
+    }
 
   }
 
+
+
+  implicit class PlotsExtensionHelper(plothelper: Plot) {
+
+    def clean() = {
+      figure.clear()
+      figure.rows = 1
+      figure.cols = 1
+      plotN = figure.subplot(0)
+      figure.visible = true
+      this
+    }
+  }
 }
